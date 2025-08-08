@@ -1,13 +1,17 @@
 package com.aditi.menu.menu_backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference; 
+import com.aditi.menu.menu_backend.serializer.CustomRestaurantTableSerializer;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.List;
 
 @Entity
 @Table(name = "orders")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Order {
 
     @Id
@@ -16,6 +20,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id", nullable = false)
+    @JsonSerialize(using = CustomRestaurantTableSerializer.class)
     private RestaurantTable table;
 
     @Column(columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: pending, 2: accept, 3: finish, 4: drop'")
