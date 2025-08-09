@@ -49,21 +49,6 @@ public class RestaurantTableController {
                 });
     }
 
-    @GetMapping("/by-number/{number}")
-    public ResponseEntity<Map<String, Object>> getTableByNumber(@PathVariable Integer number) {
-        Map<String, Object> response = new HashMap<>();
-        return tableService.getTableByNumber(number)
-                .map(table -> {
-                    response.put("message", "Successfully retrieved table");
-                    response.put("data", table);
-                    return ResponseEntity.ok(response);
-                })
-                .orElseGet(() -> {
-                    response.put("message", "Table not found with number: " + number);
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-                });
-    }
-
     @GetMapping("/by-qr-token/{qrToken}")
     public ResponseEntity<Map<String, Object>> getTableByQrToken(@PathVariable String qrToken) {
         Map<String, Object> response = new HashMap<>();

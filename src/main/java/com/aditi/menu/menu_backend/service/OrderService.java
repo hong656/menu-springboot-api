@@ -1,7 +1,6 @@
 package com.aditi.menu.menu_backend.service;
 
-import com.aditi.menu.menu_backend.dto.OrderItemRequestDto;
-import com.aditi.menu.menu_backend.dto.OrderRequestDto;
+import com.aditi.menu.menu_backend.dto.*;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import com.aditi.menu.menu_backend.entity.Order;
 import com.aditi.menu.menu_backend.entity.OrderItem;
@@ -15,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -28,61 +28,50 @@ public class OrderService {
     @Autowired
     private RestaurantTableRepository restaurantTableRepository;
 
-    // This method does not need to change
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public List<OrderResponseDto> getAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
-    // This method does not need to change
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
+    public OrderResponseDto getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+        return convertToDto(order);
     }
 
-    // This method does not need to change
-    public Order updateOrderStatus(Long orderId, Integer newStatus) {
-        Order order = getOrderById(orderId);
+    public OrderResponseDto updateOrderStatus(Long orderId, Integer newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
         if (newStatus < 1 || newStatus > 4) {
             throw new IllegalArgumentException("Invalid status value: " + newStatus);
         }
         order.setStatus(newStatus);
-        return orderRepository.save(order);
+        return convertToDto(orderRepository.save(order));
     }
 
-    /**
-     * Creates a new order using a qrToken to identify the table.
-     */
     @Transactional
-    public Order createOrder(OrderRequestDto orderRequestDto) {
-        // --- START OF CHANGES ---
-
-        // 1. Get the qrToken from the request and find the corresponding table.
+    public OrderResponseDto createOrder(OrderRequestDto orderRequestDto) {
         String token = orderRequestDto.getQrToken();
         RestaurantTable table = restaurantTableRepository.findByQrToken(token)
                 .orElseThrow(() -> new RuntimeException("Table not found with QR Token: " + token));
 
-        // 2. (Good Practice) Check if the found table is active.
         if (table.getStatus() != 1) {
             throw new RuntimeException("Table " + table.getNumber() + " is currently inactive.");
         }
 
-        // 3. Create the new Order and associate it with the found table entity.
         Order order = new Order();
-        order.setTable(table); // Use the setter for the whole table object
+        order.setTable(table);
         order.setRemark(orderRequestDto.getRemark());
-        order.setStatus(1); // Default to 'pending' status
+        order.setStatus(1);
 
-        // --- END OF CHANGES ---
-
-
-        // This part of the logic remains exactly the same
         List<OrderItem> orderItems = new ArrayList<>();
         int totalCents = 0;
 
         for (OrderItemRequestDto itemDto : orderRequestDto.getItems()) {
             MenuItem menuItem = menuItemRepository.findById(itemDto.getMenuItemId())
                     .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + itemDto.getMenuItemId()));
-            
+
             if (!menuItem.isAvailable()) {
                 throw new RuntimeException("MenuItem " + menuItem.getName() + " is not available.");
             }
@@ -101,6 +90,45 @@ public class OrderService {
         order.setOrderItems(orderItems);
         order.setTotalCents(totalCents);
 
-        return orderRepository.save(order);
+        return convertToDto(orderRepository.save(order));
+    }
+
+    private OrderResponseDto convertToDto(Order order) {
+        OrderResponseDto orderResponseDto = new OrderResponseDto();
+        orderResponseDto.setId(order.getId());
+
+        RestaurantTableResponseDto tableDto = new RestaurantTableResponseDto();
+        tableDto.setId(order.getTable().getId());
+        tableDto.setNumber(order.getTable().getNumber());
+        orderResponseDto.setTable(tableDto);
+
+        orderResponseDto.setStatus(order.getStatus());
+        orderResponseDto.setRemark(order.getRemark());
+        orderResponseDto.setTotalCents(order.getTotalCents());
+        orderResponseDto.setPlacedAt(order.getPlacedAt());
+        orderResponseDto.setUpdatedAt(order.getUpdatedAt());
+
+        List<OrderItemResponseDto> orderItemDtos = order.getOrderItems().stream().map(orderItem -> {
+            OrderItemResponseDto itemDto = new OrderItemResponseDto();
+            itemDto.setId(orderItem.getId());
+
+            MenuItemResponseDto menuItemDto = new MenuItemResponseDto();
+            menuItemDto.setId(orderItem.getMenuItem().getId());
+            menuItemDto.setName(orderItem.getMenuItem().getName());
+            menuItemDto.setDescription(orderItem.getMenuItem().getDescription());
+            menuItemDto.setPriceCents(orderItem.getMenuItem().getPriceCents());
+            menuItemDto.setImageUrl(orderItem.getMenuItem().getImageUrl());
+            menuItemDto.setAvailable(orderItem.getMenuItem().isAvailable());
+            itemDto.setMenuItem(menuItemDto);
+
+            itemDto.setQuantity(orderItem.getQuantity());
+            itemDto.setUnitPrice(orderItem.getUnitPrice());
+            itemDto.setLineTotal(orderItem.getLineTotal());
+            return itemDto;
+        }).collect(Collectors.toList());
+
+        orderResponseDto.setOrderItems(orderItemDtos);
+
+        return orderResponseDto;
     }
 }

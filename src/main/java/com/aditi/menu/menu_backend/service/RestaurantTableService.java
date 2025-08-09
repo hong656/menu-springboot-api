@@ -1,32 +1,37 @@
 package com.aditi.menu.menu_backend.service;
 
+import com.aditi.menu.menu_backend.dto.*;
+import com.aditi.menu.menu_backend.entity.Order;
 import com.aditi.menu.menu_backend.entity.RestaurantTable;
+import com.aditi.menu.menu_backend.repository.OrderRepository;
 import com.aditi.menu.menu_backend.repository.RestaurantTableRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID; // For generating QR token
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-@Service // Marks this class as a Spring service
+@Service
 public class RestaurantTableService {
 
     private final RestaurantTableRepository tableRepository;
+    private final OrderRepository orderRepository;
 
-    // @Autowired // Removed the unnecessary @Autowired annotation
-    public RestaurantTableService(RestaurantTableRepository tableRepository) {
+    public RestaurantTableService(RestaurantTableRepository tableRepository, OrderRepository orderRepository) {
         this.tableRepository = tableRepository;
+        this.orderRepository = orderRepository;
     }
 
-    @Transactional(readOnly = true) // Read-only transaction for fetching data
+    @Transactional(readOnly = true)
     public List<RestaurantTable> getAllTables() {
         return tableRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public Optional<RestaurantTable> getTableById(Long id) {
-        return tableRepository.findById(id);
+    public Optional<RestaurantTableResponseDto> getTableById(Long id) {
+        return tableRepository.findById(id).map(this::convertToDtoWithOrders);
     }
 
     @Transactional(readOnly = true)
@@ -35,17 +40,15 @@ public class RestaurantTableService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<RestaurantTable> getTableByQrToken(String qrToken) {
-        return tableRepository.findByQrToken(qrToken);
+    public Optional<RestaurantTableResponseDto> getTableByQrToken(String qrToken) {
+        return tableRepository.findByQrToken(qrToken).map(this::convertToDtoWithOrders);
     }
 
-    @Transactional // Transactional for modifying data
+    @Transactional
     public RestaurantTable createTable(RestaurantTable table) {
-        // Generate a unique QR token if not provided
         if (table.getQrToken() == null || table.getQrToken().isEmpty()) {
             table.setQrToken(generateUniqueQrToken());
         }
-        // Ensure status is set, even if not explicitly provided by client
         if (table.getStatus() == null) {
             table.setStatus(1);
         }
@@ -56,8 +59,6 @@ public class RestaurantTableService {
     public RestaurantTable updateTable(Long id, RestaurantTable updatedTable) {
         return tableRepository.findById(id).map(table -> {
             table.setNumber(updatedTable.getNumber());
-            // QR token should generally not be updated after creation, but if needed:
-            // table.setQrToken(updatedTable.getQrToken());
             table.setStatus(updatedTable.getStatus());
             return tableRepository.save(table);
         }).orElseThrow(() -> new RuntimeException("Table not found with id " + id));
@@ -71,12 +72,53 @@ public class RestaurantTableService {
         tableRepository.deleteById(id);
     }
 
-    // Helper method to generate a unique QR token
     private String generateUniqueQrToken() {
         String token;
         do {
             token = UUID.randomUUID().toString().replace("-", "").substring(0, 32);
-        } while (tableRepository.findByQrToken(token).isPresent()); // Ensure uniqueness
+        } while (tableRepository.findByQrToken(token).isPresent());
         return token;
+    }
+
+    private RestaurantTableResponseDto convertToDtoWithOrders(RestaurantTable table) {
+        RestaurantTableResponseDto tableDto = new RestaurantTableResponseDto();
+        tableDto.setId(table.getId());
+        tableDto.setNumber(table.getNumber());
+
+        List<Order> orders = orderRepository.findByTableId(table.getId());
+        List<OrderInTableResponseDto> orderDtos = orders.stream().map(order -> {
+            OrderInTableResponseDto orderDto = new OrderInTableResponseDto();
+            orderDto.setId(order.getId());
+            orderDto.setStatus(order.getStatus());
+            orderDto.setRemark(order.getRemark());
+            orderDto.setTotalCents(order.getTotalCents());
+            orderDto.setPlacedAt(order.getPlacedAt());
+            orderDto.setUpdatedAt(order.getUpdatedAt());
+
+            List<OrderItemResponseDto> orderItemDtos = order.getOrderItems().stream().map(orderItem -> {
+                OrderItemResponseDto itemDto = new OrderItemResponseDto();
+                itemDto.setId(orderItem.getId());
+
+                MenuItemResponseDto menuItemDto = new MenuItemResponseDto();
+                menuItemDto.setId(orderItem.getMenuItem().getId());
+                menuItemDto.setName(orderItem.getMenuItem().getName());
+                menuItemDto.setDescription(orderItem.getMenuItem().getDescription());
+                menuItemDto.setPriceCents(orderItem.getMenuItem().getPriceCents());
+                menuItemDto.setImageUrl(orderItem.getMenuItem().getImageUrl());
+                menuItemDto.setAvailable(orderItem.getMenuItem().isAvailable());
+                itemDto.setMenuItem(menuItemDto);
+
+                itemDto.setQuantity(orderItem.getQuantity());
+                itemDto.setUnitPrice(orderItem.getUnitPrice());
+                itemDto.setLineTotal(orderItem.getLineTotal());
+                return itemDto;
+            }).collect(Collectors.toList());
+
+            orderDto.setOrderItems(orderItemDtos);
+            return orderDto;
+        }).collect(Collectors.toList());
+
+        tableDto.setOrders(orderDtos);
+        return tableDto;
     }
 }
