@@ -8,17 +8,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ProfileController {
 
     @Autowired
     private UserRepository userRepository;
 
-    @GetMapping
+    @GetMapping("/profile")
     public ResponseEntity<?> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -37,6 +39,21 @@ public class ProfileController {
             return ResponseEntity.ok(profile);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<UserProfile>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserProfile> userProfiles = users.stream()
+                .map(user -> new UserProfile(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getFullName(),
+                        user.getRole().toString(),
+                        user.isEnabled()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(userProfiles);
     }
 
     @GetMapping("/token-info")
