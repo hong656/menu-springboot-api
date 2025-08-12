@@ -1,6 +1,7 @@
 package com.aditi.menu.menu_backend.controller;
 
 import com.aditi.menu.menu_backend.dto.*;
+import com.aditi.menu.menu_backend.entity.Role;
 import com.aditi.menu.menu_backend.entity.User;
 import com.aditi.menu.menu_backend.repository.UserRepository;
 import com.aditi.menu.menu_backend.util.JwtUtil;
@@ -68,6 +69,15 @@ public class AuthController {
         User user = new User(signUpRequest.getUsername(),
                            encoder.encode(signUpRequest.getPassword()),
                            signUpRequest.getEmail());
+
+        if (signUpRequest.getRole() != null) {
+            try {
+                Role role = Role.valueOf(signUpRequest.getRole().toUpperCase());
+                user.setRole(role);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid role!"));
+            }
+        }
 
         userRepository.save(user);
 
