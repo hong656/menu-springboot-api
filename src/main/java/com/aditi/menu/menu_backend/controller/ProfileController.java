@@ -1,5 +1,7 @@
 package com.aditi.menu.menu_backend.controller;
 
+import com.aditi.menu.menu_backend.entity.Role;
+import com.aditi.menu.menu_backend.entity.Status;
 import com.aditi.menu.menu_backend.entity.User;
 import com.aditi.menu.menu_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +39,8 @@ public class ProfileController {
                 currentUser.getUsername(),
                 currentUser.getEmail(),
                 currentUser.getFullName(),
-                currentUser.getRole().toString(),
-                currentUser.isEnabled()
+                currentUser.getRole(),
+                currentUser.getStatus()
             );
             return ResponseEntity.ok(profile);
         }
@@ -54,8 +56,8 @@ public class ProfileController {
                         user.getUsername(),
                         user.getEmail(),
                         user.getFullName(),
-                        user.getRole().toString(),
-                        user.isEnabled()))
+                        user.getRole(),
+                        user.getStatus()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(userProfiles);
     }
@@ -96,8 +98,8 @@ public class ProfileController {
                 updatedUser.getUsername(),
                 updatedUser.getEmail(),
                 updatedUser.getFullName(),
-                updatedUser.getRole().toString(),
-                updatedUser.isEnabled()
+                updatedUser.getRole(),
+                updatedUser.getStatus()
             );
             
             return ResponseEntity.ok(profile);
@@ -121,10 +123,10 @@ public class ProfileController {
                 user.setEmail(request.getEmail());
             }
             if (request.getRole() != null) {
-                user.setRole(com.aditi.menu.menu_backend.entity.Role.valueOf(request.getRole()));
+                user.setRole(Role.fromString(request.getRole()));
             }
-            if (request.isEnabled() != null) {
-                user.setEnabled(request.isEnabled());
+            if (request.getStatus() != null) {
+                user.setStatus(request.getStatus());
             }
 
             User updatedUser = userRepository.save(user);
@@ -134,8 +136,8 @@ public class ProfileController {
                 updatedUser.getUsername(),
                 updatedUser.getEmail(),
                 updatedUser.getFullName(),
-                updatedUser.getRole().toString(),
-                updatedUser.isEnabled()
+                updatedUser.getRole(),
+                updatedUser.getStatus()
             );
 
             return ResponseEntity.ok(profile);
@@ -150,16 +152,16 @@ class UserProfile {
     private String username;
     private String email;
     private String fullName;
-    private String role;
-    private boolean enabled;
+    private int role;
+    private int status;
 
-    public UserProfile(Long id, String username, String email, String fullName, String role, boolean enabled) {
+    public UserProfile(Long id, String username, String email, String fullName, int role, int status) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
         this.role = role;
-        this.enabled = enabled;
+        this.status = status;
     }
 
     // Getters
@@ -167,8 +169,8 @@ class UserProfile {
     public String getUsername() { return username; }
     public String getEmail() { return email; }
     public String getFullName() { return fullName; }
-    public String getRole() { return role; }
-    public boolean isEnabled() { return enabled; }
+    public int getRole() { return role; }
+    public int getStatus() { return status; }
 }
 
 class TokenInfo {
@@ -204,7 +206,7 @@ class UpdateUserRequest {
     private String password;
     private String email;
     private String role;
-    private Boolean enabled;
+    private Integer status;
 
     // Getters and Setters
     public String getUsername() { return username; }
@@ -215,6 +217,6 @@ class UpdateUserRequest {
     public void setEmail(String email) { this.email = email; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
-    public Boolean isEnabled() { return enabled; }
-    public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
 }
