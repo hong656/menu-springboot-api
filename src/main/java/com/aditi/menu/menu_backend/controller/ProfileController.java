@@ -1,7 +1,6 @@
 package com.aditi.menu.menu_backend.controller;
 
 import com.aditi.menu.menu_backend.entity.Role;
-import com.aditi.menu.menu_backend.entity.Status;
 import com.aditi.menu.menu_backend.entity.User;
 import com.aditi.menu.menu_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

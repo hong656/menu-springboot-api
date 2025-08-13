@@ -28,4 +28,9 @@ public class MenuItemController {
     public MenuItem createMenuItem(@RequestBody MenuItem menuItem) {
         return menuItemService.createMenuItem(menuItem);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable Integer id, @RequestBody MenuItem menuItem) {
+        return ResponseEntity.ok(menuItemService.updateMenuItem(id, menuItem));
+    }
 }
