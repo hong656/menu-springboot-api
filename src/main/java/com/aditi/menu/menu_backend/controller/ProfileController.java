@@ -1,6 +1,5 @@
 package com.aditi.menu.menu_backend.controller;
 
-import com.aditi.menu.menu_backend.entity.Role;
 import com.aditi.menu.menu_backend.entity.User;
 import com.aditi.menu.menu_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,7 +121,7 @@ public class ProfileController {
                 user.setEmail(request.getEmail());
             }
             if (request.getRole() != null) {
-                user.setRole(Role.fromString(request.getRole()));
+                user.setRole(request.getRole());
             }
             if (request.getStatus() != null) {
                 user.setStatus(request.getStatus());
@@ -204,7 +203,7 @@ class UpdateUserRequest {
     private String username;
     private String password;
     private String email;
-    private String role;
+    private Integer role;
     private Integer status;
 
     // Getters and Setters
@@ -214,8 +213,8 @@ class UpdateUserRequest {
     public void setPassword(String password) { this.password = password; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public Integer getRole() { return role; }
+    public void setRole(Integer role) { this.role = role; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
 }
