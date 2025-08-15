@@ -142,6 +142,34 @@ public class ProfileController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PatchMapping("/users/delete/{id}")
+    public ResponseEntity<?> softDeleteUser(@PathVariable Long id, @RequestBody DeleteUserRequest request) {
+        Optional<User> userOpt = userRepository.findById(id);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+
+            if (request.getStatus() != null && request.getStatus() == 3) {
+                user.setStatus(request.getStatus());
+                User updatedUser = userRepository.save(user);
+
+                UserProfile profile = new UserProfile(
+                    updatedUser.getId(),
+                    updatedUser.getUsername(),
+                    updatedUser.getEmail(),
+                    updatedUser.getFullName(),
+                    updatedUser.getRole(),
+                    updatedUser.getStatus()
+                );
+
+                return ResponseEntity.ok(profile);
+            } else {
+                return ResponseEntity.badRequest().body("Invalid status provided for soft delete.");
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
 }
 
 // DTOs for Profile
@@ -215,6 +243,13 @@ class UpdateUserRequest {
     public void setEmail(String email) { this.email = email; }
     public Integer getRole() { return role; }
     public void setRole(Integer role) { this.role = role; }
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
+}
+
+class DeleteUserRequest {
+    private Integer status;
+
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
 }
