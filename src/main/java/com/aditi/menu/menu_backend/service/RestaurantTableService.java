@@ -72,6 +72,14 @@ public class RestaurantTableService {
         tableRepository.deleteById(id);
     }
 
+    @Transactional
+    public RestaurantTable softDeleteTable(Long id, StatusUpdateDto statusUpdateDto) {
+        return tableRepository.findById(id).map(table -> {
+            table.setStatus(statusUpdateDto.getStatus());
+            return tableRepository.save(table);
+        }).orElseThrow(() -> new RuntimeException("Table not found with id " + id));
+    }
+
     private String generateUniqueQrToken() {
         String token;
         do {

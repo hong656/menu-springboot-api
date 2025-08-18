@@ -33,7 +33,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/{id}")
     public ResponseEntity<OrderResponseDto> updateOrderStatus(
             @PathVariable Long id,
             @RequestBody OrderStatusUpdateRequestDto statusUpdateDto) {
