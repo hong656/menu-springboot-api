@@ -50,6 +50,21 @@ public class RestaurantTableController {
                 });
     }
 
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<Map<String, Object>> getTableId(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        return tableService.getTableId(id)
+        .map(table -> {
+            response.put("message", "Successfully retrieved table");
+            response.put("data", table);
+            return ResponseEntity.ok(response);
+        })
+        .orElseGet(() -> {
+            response.put("message", "Table not found with id: " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        });
+    }
+
     @GetMapping("/by-qr-token/{qrToken}")
     public ResponseEntity<Map<String, Object>> getTableByQrToken(@PathVariable String qrToken) {
         Map<String, Object> response = new HashMap<>();

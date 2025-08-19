@@ -35,6 +35,18 @@ public class RestaurantTableService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<TableResponseDto> getTableId(Long id) {
+        return tableRepository.findById(id).map(table -> {
+            TableResponseDto dto = new TableResponseDto();
+            dto.setId(table.getId());
+            dto.setStatus(table.getStatus());
+            dto.setNumber(table.getNumber());
+            dto.setQr_token(table.getQrToken());
+            return dto;
+        });
+    }
+
+    @Transactional(readOnly = true)
     public Optional<RestaurantTable> getTableByNumber(Integer number) {
         return tableRepository.findByNumber(number);
     }
