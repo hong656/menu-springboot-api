@@ -4,11 +4,11 @@ public class RegisterRequest {
     private String username;
     private String password;
     private String email;
-    private String role;
+    private Integer role;
 
     public RegisterRequest() {}
 
-    public RegisterRequest(String username, String password, String email, String role) {
+    public RegisterRequest(String username, String password, String email, Integer role) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -21,6 +21,6 @@ public class RegisterRequest {
     public void setPassword(String password) { this.password = password; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public Integer getRole() { return role; }
+    public void setRole(Integer role) { this.role = role; }
 }

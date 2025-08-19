@@ -72,11 +72,12 @@ public class AuthController {
 
         if (signUpRequest.getRole() != null) {
             try {
-                Role role = Role.valueOf(signUpRequest.getRole().toUpperCase());
-                user.setRole(role);
+                user.setRole(signUpRequest.getRole());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid role!"));
             }
+        } else {
+            user.setRole(Role.USER); // Default role
         }
 
         userRepository.save(user);

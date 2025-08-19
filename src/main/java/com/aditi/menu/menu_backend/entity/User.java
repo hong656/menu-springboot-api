@@ -28,10 +28,11 @@ public class User implements UserDetails {
     @Column(name = "full_name")
     private String fullName;
 
-    @Enumerated(EnumType.STRING)
-    private Role role = Role.ADMIN;
+    @Column(name = "role", nullable = false, columnDefinition = "TINYINT DEFAULT 2 COMMENT '1: Tester, 2: User, 3: Admin'")
+    private int role = Role.USER;
 
-    private boolean enabled = true;
+    @Column(name = "status", nullable = false, columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: active, 2: inactive, 3: deleted'")
+    private int status = Status.ACTIVE;
 
     // Constructors
     public User() {}
@@ -49,7 +50,7 @@ public class User implements UserDetails {
         this.fullName = fullName;
     }
 
-    public User(String username, String password, String email, Role role) {
+    public User(String username, String password, String email, int role) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -59,7 +60,7 @@ public class User implements UserDetails {
     // UserDetails implementation
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + Role.toString(this.role)));
     }
 
     @Override
@@ -72,7 +73,7 @@ public class User implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return enabled; }
+    public boolean isEnabled() { return this.status == Status.ACTIVE; }
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -92,8 +93,9 @@ public class User implements UserDetails {
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public int getRole() { return role; }
+    public void setRole(int role) { this.role = role; }
 
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public int getStatus() { return status; }
+    public void setStatus(int status) { this.status = status; }
 }

@@ -72,10 +72,6 @@ public class OrderService {
             MenuItem menuItem = menuItemRepository.findById(itemDto.getMenuItemId())
                     .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + itemDto.getMenuItemId()));
 
-            if (!menuItem.isAvailable()) {
-                throw new RuntimeException("MenuItem " + menuItem.getName() + " is not available.");
-            }
-
             OrderItem orderItem = new OrderItem();
             orderItem.setMenuItem(menuItem);
             orderItem.setQuantity(itemDto.getQuantity());
@@ -92,7 +88,7 @@ public class OrderService {
 
         return convertToDto(orderRepository.save(order));
     }
-
+        
     private OrderResponseDto convertToDto(Order order) {
         OrderResponseDto orderResponseDto = new OrderResponseDto();
         orderResponseDto.setId(order.getId());
@@ -118,7 +114,6 @@ public class OrderService {
             menuItemDto.setDescription(orderItem.getMenuItem().getDescription());
             menuItemDto.setPriceCents(orderItem.getMenuItem().getPriceCents());
             menuItemDto.setImageUrl(orderItem.getMenuItem().getImageUrl());
-            menuItemDto.setAvailable(orderItem.getMenuItem().isAvailable());
             itemDto.setMenuItem(menuItemDto);
 
             itemDto.setQuantity(orderItem.getQuantity());

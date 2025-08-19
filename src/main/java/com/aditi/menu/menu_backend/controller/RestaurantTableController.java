@@ -1,5 +1,6 @@
 package com.aditi.menu.menu_backend.controller;
 
+import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.RestaurantTable;
 import com.aditi.menu.menu_backend.service.RestaurantTableService;
 import org.springframework.http.HttpStatus;
@@ -98,6 +99,20 @@ public class RestaurantTableController {
         try {
             tableService.deleteTable(id);
             response.put("message", "Table deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> softDeleteTable(@PathVariable Long id, @RequestBody StatusUpdateDto statusUpdateDto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            RestaurantTable updatedTable = tableService.softDeleteTable(id, statusUpdateDto);
+            response.put("message", "Table status updated successfully");
+            response.put("data", updatedTable);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             response.put("message", e.getMessage());
