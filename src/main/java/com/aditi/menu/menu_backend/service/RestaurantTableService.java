@@ -113,7 +113,6 @@ public class RestaurantTableService {
                 menuItemDto.setDescription(orderItem.getMenuItem().getDescription());
                 menuItemDto.setPriceCents(orderItem.getMenuItem().getPriceCents());
                 menuItemDto.setImageUrl(orderItem.getMenuItem().getImageUrl());
-                menuItemDto.setAvailable(orderItem.getMenuItem().isAvailable());
                 itemDto.setMenuItem(menuItemDto);
 
                 itemDto.setQuantity(orderItem.getQuantity());

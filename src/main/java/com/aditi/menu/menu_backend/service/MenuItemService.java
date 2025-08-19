@@ -1,9 +1,11 @@
 package com.aditi.menu.menu_backend.service;
 
 import com.aditi.menu.menu_backend.repository.MenuItemRepository;
+import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -45,7 +47,6 @@ public class MenuItemService {
         existingMenuItem.setName(updatedMenuItem.getName());
         existingMenuItem.setDescription(updatedMenuItem.getDescription());
         existingMenuItem.setPriceCents(updatedMenuItem.getPriceCents());
-        existingMenuItem.setAvailable(updatedMenuItem.isAvailable());
 
         if (image != null && !image.isEmpty()) {
             // Delete old image if it exists
@@ -70,6 +71,14 @@ public class MenuItemService {
             }
         }
         menuItemRepository.deleteById(id);
+    }
+
+    @Transactional
+    public MenuItem softDeleteMenuItem(Integer id, StatusUpdateDto statusUpdateDto) {
+        MenuItem menuItem = menuItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("MenuItem not found with id " + id));
+        menuItem.setStatus(statusUpdateDto.getStatus());
+        return menuItemRepository.save(menuItem);
     }
 
     private String saveImage(MultipartFile image) throws IOException {
