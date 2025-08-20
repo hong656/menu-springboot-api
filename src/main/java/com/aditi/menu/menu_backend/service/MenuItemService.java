@@ -24,7 +24,7 @@ public class MenuItemService {
     private final String UPLOAD_DIR = "./uploads/images/";
 
     public List<MenuItem> getAllMenuItems() {
-        return menuItemRepository.findAll();
+        return menuItemRepository.findAllByStatusNot(3);
     }
 
     public MenuItem getMenuItemById(Integer id) {
@@ -40,13 +40,16 @@ public class MenuItemService {
         return menuItemRepository.save(menuItem);
     }
 
-    public MenuItem updateMenuItem(Integer id, MenuItem updatedMenuItem, MultipartFile image) throws IOException {
+    public MenuItem updateMenuItem(Integer id, String name, String description, Integer priceCents, Integer status, MultipartFile image) throws IOException {
         MenuItem existingMenuItem = menuItemRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
 
-        existingMenuItem.setName(updatedMenuItem.getName());
-        existingMenuItem.setDescription(updatedMenuItem.getDescription());
-        existingMenuItem.setPriceCents(updatedMenuItem.getPriceCents());
+        existingMenuItem.setName(name);
+        existingMenuItem.setDescription(description);
+        existingMenuItem.setPriceCents(priceCents);
+        if (status != null) {
+            existingMenuItem.setStatus(status);
+        }
 
         if (image != null && !image.isEmpty()) {
             // Delete old image if it exists

@@ -36,26 +36,25 @@ public class MenuItemController {
         @RequestParam("name") String name,
         @RequestParam("description") String description,
         @RequestParam("priceCents") Integer priceCents,
+        @RequestParam("status") Integer status,
         @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
         MenuItem menuItem = new MenuItem();
         menuItem.setName(name);
         menuItem.setDescription(description);
         menuItem.setPriceCents(priceCents);
+        menuItem.setStatus(status);
         return menuItemService.createMenuItem(menuItem, image);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<MenuItem> updateMenuItem(
-        @PathVariable Integer id,                                                   
-        @RequestParam("name") String name,                                                   
-        @RequestParam("description") String description,                                                   
+        @PathVariable Integer id,
+        @RequestParam("name") String name,
+        @RequestParam("description") String description,
         @RequestParam("priceCents") Integer priceCents,
+        @RequestParam("status") Integer status,
         @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
-        MenuItem menuItem = new MenuItem();
-        menuItem.setName(name);
-        menuItem.setDescription(description);
-        menuItem.setPriceCents(priceCents);
-        return ResponseEntity.ok(menuItemService.updateMenuItem(id, menuItem, image));
+        return ResponseEntity.ok(menuItemService.updateMenuItem(id, name, description, priceCents, status, image));
     }
 
     @DeleteMapping("/{id}")

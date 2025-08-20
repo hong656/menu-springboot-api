@@ -49,6 +49,7 @@ public class ProfileController {
     public ResponseEntity<List<UserProfile>> getAllUsers() {
         List<User> users = userRepository.findAll();
         List<UserProfile> userProfiles = users.stream()
+                .filter(user -> user.getStatus() != 3)
                 .map(user -> new UserProfile(
                         user.getId(),
                         user.getUsername(),
