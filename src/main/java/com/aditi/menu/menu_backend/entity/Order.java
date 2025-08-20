@@ -23,7 +23,7 @@ public class Order {
     @JsonSerialize(using = CustomRestaurantTableSerializer.class)
     private RestaurantTable table;
 
-    @Column(columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: pending, 2: accept, 3: finish, 4: drop'")
+    @Column(columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: received, 2: preparing, 3: completed, 4: canceled'")
     private Integer status = 1;
 
     @Lob
