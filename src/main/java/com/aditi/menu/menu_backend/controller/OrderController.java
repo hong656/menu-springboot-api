@@ -3,12 +3,11 @@ package com.aditi.menu.menu_backend.controller;
 import com.aditi.menu.menu_backend.dto.OrderRequestDto;
 import com.aditi.menu.menu_backend.dto.OrderResponseDto;
 import com.aditi.menu.menu_backend.dto.OrderStatusUpdateRequestDto;
+import com.aditi.menu.menu_backend.dto.AllOrdersResponseDto;
 import com.aditi.menu.menu_backend.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -24,8 +23,8 @@ public class OrderController {
     }
 
     @GetMapping
-    public List<OrderResponseDto> getAllOrders() {
-        return orderService.getAllOrders();
+    public AllOrdersResponseDto getAllOrders() {
+        return orderService.getAllOrdersWithSummary();
     }
 
     @GetMapping("/{id}")

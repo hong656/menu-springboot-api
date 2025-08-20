@@ -1,6 +1,7 @@
 package com.aditi.menu.menu_backend.service;
 
 import com.aditi.menu.menu_backend.dto.*;
+import com.aditi.menu.menu_backend.dto.AllOrdersResponseDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import com.aditi.menu.menu_backend.entity.Order;
 import com.aditi.menu.menu_backend.entity.OrderItem;
@@ -28,10 +29,19 @@ public class OrderService {
     @Autowired
     private RestaurantTableRepository restaurantTableRepository;
 
-    public List<OrderResponseDto> getAllOrders() {
-        return orderRepository.findAll().stream()
+    public AllOrdersResponseDto getAllOrdersWithSummary() {
+        List<Order> allOrders = orderRepository.findAll();
+        List<OrderResponseDto> orderResponseDtos = allOrders.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+
+        long preparingCount = allOrders.stream().filter(order -> order.getStatus() == 1).count();
+        long receivedCount = allOrders.stream().filter(order -> order.getStatus() == 2).count();
+        long completedCount = allOrders.stream().filter(order -> order.getStatus() == 3).count();
+        long canceledCount = allOrders.stream().filter(order -> order.getStatus() == 4).count();
+        OrderStatusSummaryDto summary = new OrderStatusSummaryDto(preparingCount, receivedCount, completedCount, canceledCount);
+
+        return new AllOrdersResponseDto(orderResponseDtos, summary);
     }
 
     public OrderResponseDto getOrderById(Long id) {
