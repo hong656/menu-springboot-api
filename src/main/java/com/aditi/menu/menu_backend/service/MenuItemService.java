@@ -24,7 +24,7 @@ public class MenuItemService {
     private final String UPLOAD_DIR = "./uploads/images/";
 
     public List<MenuItem> getAllMenuItems() {
-        return menuItemRepository.findAll();
+        return menuItemRepository.findAllByStatusNot(3);
     }
 
     public MenuItem getMenuItemById(Integer id) {

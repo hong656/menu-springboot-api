@@ -26,7 +26,7 @@ public class RestaurantTableService {
 
     @Transactional(readOnly = true)
     public List<RestaurantTable> getAllTables() {
-        return tableRepository.findAll();
+        return tableRepository.findAllByStatusNot(3);
     }
 
     @Transactional(readOnly = true)
