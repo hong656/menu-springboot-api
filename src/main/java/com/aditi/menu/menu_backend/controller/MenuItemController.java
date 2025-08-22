@@ -37,12 +37,14 @@ public class MenuItemController {
         @RequestParam("description") String description,
         @RequestParam("priceCents") Integer priceCents,
         @RequestParam("status") Integer status,
+        @RequestParam("type") String type,
         @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
         MenuItem menuItem = new MenuItem();
         menuItem.setName(name);
         menuItem.setDescription(description);
         menuItem.setPriceCents(priceCents);
         menuItem.setStatus(status);
+        menuItem.setType(type);
         return menuItemService.createMenuItem(menuItem, image);
     }
 
@@ -53,8 +55,9 @@ public class MenuItemController {
         @RequestParam("description") String description,
         @RequestParam("priceCents") Integer priceCents,
         @RequestParam("status") Integer status,
+        @RequestParam("type") String type,
         @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
-        return ResponseEntity.ok(menuItemService.updateMenuItem(id, name, description, priceCents, status, image));
+        return ResponseEntity.ok(menuItemService.updateMenuItem(id, name, description, priceCents, status, type, image));
     }
 
     @DeleteMapping("/{id}")
