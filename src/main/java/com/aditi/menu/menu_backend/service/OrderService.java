@@ -82,6 +82,11 @@ public class OrderService {
             MenuItem menuItem = menuItemRepository.findById(itemDto.getMenuItemId())
                     .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + itemDto.getMenuItemId()));
 
+            // Check if the menu item is active (status 1)
+            if (menuItem.getStatus() != 1) {
+                throw new RuntimeException("MenuItem '" + menuItem.getName() + "' is not available for order.");
+            }
+
             OrderItem orderItem = new OrderItem();
             orderItem.setMenuItem(menuItem);
             orderItem.setQuantity(itemDto.getQuantity());

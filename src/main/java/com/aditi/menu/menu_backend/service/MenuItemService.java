@@ -40,13 +40,14 @@ public class MenuItemService {
         return menuItemRepository.save(menuItem);
     }
 
-    public MenuItem updateMenuItem(Integer id, String name, String description, Integer priceCents, Integer status, MultipartFile image) throws IOException {
+    public MenuItem updateMenuItem(Integer id, String name, String description, Integer priceCents, Integer status, String type, MultipartFile image) throws IOException {
         MenuItem existingMenuItem = menuItemRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
 
         existingMenuItem.setName(name);
         existingMenuItem.setDescription(description);
         existingMenuItem.setPriceCents(priceCents);
+        existingMenuItem.setType(type);
         if (status != null) {
             existingMenuItem.setStatus(status);
         }

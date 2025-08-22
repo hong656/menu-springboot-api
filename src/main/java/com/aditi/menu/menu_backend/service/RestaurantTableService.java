@@ -58,6 +58,17 @@ public class RestaurantTableService {
 
     @Transactional
     public RestaurantTable createTable(RestaurantTable table) {
+        java.util.Optional<RestaurantTable> existingTableOpt = tableRepository.findByNumber(table.getNumber());
+
+        if (existingTableOpt.isPresent()) {
+            RestaurantTable existingTable = existingTableOpt.get();
+            if (existingTable.getStatus() == 3) {
+                tableRepository.delete(existingTable);
+            } else {
+                throw new IllegalStateException("An active table with number " + table.getNumber() + " already exists.");
+            }
+        }
+
         if (table.getQrToken() == null || table.getQrToken().isEmpty()) {
             table.setQrToken(generateUniqueQrToken());
         }
