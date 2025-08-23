@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface MenuItemRepository extends JpaRepository<MenuItem, Integer> {
     List<MenuItem> findAllByStatusNot(Integer status);
+    List<MenuItem> findAllByStatusNotIn(List<Integer> statuses);
 }

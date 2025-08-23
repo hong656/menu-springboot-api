@@ -27,6 +27,10 @@ public class MenuItemService {
         return menuItemRepository.findAllByStatusNot(3);
     }
 
+    public List<MenuItem> getAllPublicMenuItems() {
+        return menuItemRepository.findAllByStatusNotIn(List.of(2, 3));
+    }
+
     public MenuItem getMenuItemById(Integer id) {
         return menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
