@@ -4,6 +4,9 @@ import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.Banner;
 import com.aditi.menu.menu_backend.service.BannerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,8 +24,22 @@ public class BannerController {
     private BannerService bannerService;
 
     @GetMapping
-    public List<Banner> getAllBanners() {
-        return bannerService.getAllBanners();
+    public ResponseEntity<Map<String, Object>> getAllBanners(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Banner> bannerPage = bannerService.getAllBanners(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("items", bannerPage.getContent());
+        response.put("currentPage", bannerPage.getNumber());
+        response.put("pageSize", bannerPage.getSize());
+        response.put("totalItems", bannerPage.getTotalElements());
+        response.put("totalPages", bannerPage.getTotalPages());
+        response.put("isFirst", bannerPage.isFirst());
+        response.put("isLast", bannerPage.isLast());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

@@ -9,9 +9,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -46,19 +50,30 @@ public class ProfileController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserProfile>> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        List<UserProfile> userProfiles = users.stream()
-                .filter(user -> user.getStatus() != 3)
-                .map(user -> new UserProfile(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getEmail(),
-                        user.getFullName(),
-                        user.getRole(),
-                        user.getStatus()))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(userProfiles);
+    public ResponseEntity<Map<String, Object>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> userPage = userRepository.findAllByStatusNot(3, pageable);
+
+        Page<UserProfile> userProfilePage = userPage.map(user -> new UserProfile(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole(),
+                user.getStatus()));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("items", userProfilePage.getContent());
+        response.put("currentPage", userProfilePage.getNumber());
+        response.put("pageSize", userProfilePage.getSize());
+        response.put("totalItems", userProfilePage.getTotalElements());
+        response.put("totalPages", userProfilePage.getTotalPages());
+        response.put("isFirst", userProfilePage.isFirst());
+        response.put("isLast", userProfilePage.isLast());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/token-info")

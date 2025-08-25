@@ -8,9 +8,11 @@ import com.aditi.menu.menu_backend.repository.RestaurantTableRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,8 +27,8 @@ public class RestaurantTableService {
     }
 
     @Transactional(readOnly = true)
-    public List<RestaurantTable> getAllTables() {
-        return tableRepository.findAllByStatusNot(3);
+    public Page<RestaurantTable> getAllTables(Pageable pageable) {
+        return tableRepository.findAllByStatusNot(3, pageable);
     }
 
     @Transactional(readOnly = true)

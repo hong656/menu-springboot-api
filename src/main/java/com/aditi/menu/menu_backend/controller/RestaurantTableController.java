@@ -3,12 +3,14 @@ package com.aditi.menu.menu_backend.controller;
 import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.RestaurantTable;
 import com.aditi.menu.menu_backend.service.RestaurantTableService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,17 +24,22 @@ public class RestaurantTableController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllTables() {
+    public ResponseEntity<Map<String, Object>> getAllTables(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<RestaurantTable> tablePage = tableService.getAllTables(pageable);
+
         Map<String, Object> response = new HashMap<>();
-        try {
-            List<RestaurantTable> tables = tableService.getAllTables();
-            response.put("message", "Successfully retrieved all tables");
-            response.put("data", tables);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("message", "Error retrieving tables: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        response.put("items", tablePage.getContent());
+        response.put("currentPage", tablePage.getNumber());
+        response.put("pageSize", tablePage.getSize());
+        response.put("totalItems", tablePage.getTotalElements());
+        response.put("totalPages", tablePage.getTotalPages());
+        response.put("isFirst", tablePage.isFirst());
+        response.put("isLast", tablePage.isLast());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

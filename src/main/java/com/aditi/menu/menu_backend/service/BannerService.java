@@ -4,6 +4,8 @@ import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.Banner;
 import com.aditi.menu.menu_backend.repository.BannerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +25,8 @@ public class BannerService {
 
     private final String UPLOAD_DIR = "./uploads/images/";
 
-    public List<Banner> getAllBanners() {
-        return bannerRepository.findAllByStatusNot(3);
+    public Page<Banner> getAllBanners(Pageable pageable) {
+        return bannerRepository.findAllByStatusNot(3, pageable);
     }
 
     public List<Banner> getAllPublicBanners() {

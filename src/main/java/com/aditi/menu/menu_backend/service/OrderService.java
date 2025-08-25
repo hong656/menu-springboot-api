@@ -1,7 +1,6 @@
 package com.aditi.menu.menu_backend.service;
 
 import com.aditi.menu.menu_backend.dto.*;
-import com.aditi.menu.menu_backend.dto.AllOrdersResponseDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import com.aditi.menu.menu_backend.entity.Order;
 import com.aditi.menu.menu_backend.entity.OrderItem;
@@ -10,6 +9,9 @@ import com.aditi.menu.menu_backend.repository.MenuItemRepository;
 import com.aditi.menu.menu_backend.repository.OrderRepository;
 import com.aditi.menu.menu_backend.repository.RestaurantTableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,19 +31,21 @@ public class OrderService {
     @Autowired
     private RestaurantTableRepository restaurantTableRepository;
 
-    public AllOrdersResponseDto getAllOrdersWithSummary() {
-        List<Order> allOrders = orderRepository.findAll();
-        List<OrderResponseDto> orderResponseDtos = allOrders.stream()
+    public Page<OrderResponseDto> getAllOrders(Pageable pageable) {
+        Page<Order> orderPage = orderRepository.findAll(pageable);
+        List<OrderResponseDto> orderResponseDtos = orderPage.getContent().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+        return new PageImpl<>(orderResponseDtos, pageable, orderPage.getTotalElements());
+    }
 
+    public OrderStatusSummaryDto getOrderStatusSummary() {
+        List<Order> allOrders = orderRepository.findAll();
         long preparingCount = allOrders.stream().filter(order -> order.getStatus() == 1).count();
         long receivedCount = allOrders.stream().filter(order -> order.getStatus() == 2).count();
         long completedCount = allOrders.stream().filter(order -> order.getStatus() == 3).count();
         long canceledCount = allOrders.stream().filter(order -> order.getStatus() == 4).count();
-        OrderStatusSummaryDto summary = new OrderStatusSummaryDto(preparingCount, receivedCount, completedCount, canceledCount);
-
-        return new AllOrdersResponseDto(orderResponseDtos, summary);
+        return new OrderStatusSummaryDto(preparingCount, receivedCount, completedCount, canceledCount);
     }
 
     public OrderResponseDto getOrderById(Long id) {
