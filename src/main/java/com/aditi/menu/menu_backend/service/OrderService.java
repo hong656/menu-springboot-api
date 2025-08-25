@@ -39,6 +39,13 @@ public class OrderService {
         return new PageImpl<>(orderResponseDtos, pageable, orderPage.getTotalElements());
     }
 
+    public List<OrderResponseDto> getAllOrdersWithoutPagination() {
+        List<Order> orders = orderRepository.findAll();
+        return orders.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public OrderStatusSummaryDto getOrderStatusSummary() {
         List<Order> allOrders = orderRepository.findAll();
         long preparingCount = allOrders.stream().filter(order -> order.getStatus() == 1).count();

@@ -7,6 +7,7 @@ import com.aditi.menu.menu_backend.dto.OrderStatusUpdateRequestDto;
 import com.aditi.menu.menu_backend.service.OrderService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,18 @@ public class OrderController {
         response.put("totalPages", orderPage.getTotalPages());
         response.put("isFirst", orderPage.isFirst());
         response.put("isLast", orderPage.isLast());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Map<String, Object>> getAllOrdersWithoutPagination() {
+        List<OrderResponseDto> orders = orderService.getAllOrdersWithoutPagination();
+        OrderStatusSummaryDto summary = orderService.getOrderStatusSummary();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("orders", orders);
+        response.put("summary", summary);
 
         return ResponseEntity.ok(response);
     }
