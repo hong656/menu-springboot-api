@@ -4,6 +4,8 @@ import com.aditi.menu.menu_backend.repository.MenuItemRepository;
 import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +25,12 @@ public class MenuItemService {
 
     private final String UPLOAD_DIR = "./uploads/images/";
 
-    public List<MenuItem> getAllMenuItems() {
-        return menuItemRepository.findAllByStatusNot(3);
+    public Page<MenuItem> getAllMenuItems(Pageable pageable) {
+        return menuItemRepository.findAllByStatusNot(3, pageable);
+    }
+
+    public List<MenuItem> getAllPublicMenuItems() {
+        return menuItemRepository.findAllByStatusNotIn(List.of(2, 3));
     }
 
     public MenuItem getMenuItemById(Integer id) {

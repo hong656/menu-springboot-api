@@ -4,6 +4,9 @@ import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import com.aditi.menu.menu_backend.service.MenuItemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,8 +24,22 @@ public class MenuItemController {
     private MenuItemService menuItemService;
 
     @GetMapping
-    public List<MenuItem> getAllMenuItems() {
-        return menuItemService.getAllMenuItems();
+    public ResponseEntity<Map<String, Object>> getAllMenuItems(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MenuItem> menuItemPage = menuItemService.getAllMenuItems(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("items", menuItemPage.getContent());
+        response.put("currentPage", menuItemPage.getNumber());
+        response.put("pageSize", menuItemPage.getSize());
+        response.put("totalItems", menuItemPage.getTotalElements());
+        response.put("totalPages", menuItemPage.getTotalPages());
+        response.put("isFirst", menuItemPage.isFirst());
+        response.put("isLast", menuItemPage.isLast());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

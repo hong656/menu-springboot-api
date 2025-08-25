@@ -2,10 +2,17 @@ package com.aditi.menu.menu_backend.controller;
 
 import com.aditi.menu.menu_backend.dto.OrderRequestDto;
 import com.aditi.menu.menu_backend.dto.OrderResponseDto;
+import com.aditi.menu.menu_backend.dto.OrderStatusSummaryDto;
 import com.aditi.menu.menu_backend.dto.OrderStatusUpdateRequestDto;
-import com.aditi.menu.menu_backend.dto.AllOrdersResponseDto;
 import com.aditi.menu.menu_backend.service.OrderService;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +30,27 @@ public class OrderController {
     }
 
     @GetMapping
-    public AllOrdersResponseDto getAllOrders() {
-        return orderService.getAllOrdersWithSummary();
+    public ResponseEntity<Map<String, Object>> getAllOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<OrderResponseDto> orderPage = orderService.getAllOrders(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("items", orderPage.getContent());
+        response.put("currentPage", orderPage.getNumber());
+        response.put("pageSize", orderPage.getSize());
+        response.put("totalItems", orderPage.getTotalElements());
+        response.put("totalPages", orderPage.getTotalPages());
+        response.put("isFirst", orderPage.isFirst());
+        response.put("isLast", orderPage.isLast());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<OrderStatusSummaryDto> getOrderSummary() {
+        return ResponseEntity.ok(orderService.getOrderStatusSummary());
     }
 
     @GetMapping("/{id}")
