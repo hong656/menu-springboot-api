@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
@@ -25,5 +27,11 @@ public class WebSettingController {
     @GetMapping
     public ResponseEntity<List<WebSetting>> getWebSettings() {
         return ResponseEntity.ok(webSettingService.getWebSettings());
+    }
+
+    @PostMapping
+    public ResponseEntity<WebSetting> updateLogo(@RequestParam("logo") MultipartFile file) {
+        WebSetting updatedLogo = webSettingService.updateLogo(file);
+        return ResponseEntity.ok(updatedLogo);
     }
 }
