@@ -66,7 +66,7 @@ public class WebSettingService {
             Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
 
             // Update the database
-            logoSetting.setSettingValue("/uploads/images/" + filename);
+            logoSetting.setSettingValue("/images/" + filename);
             WebSetting updatedWebSetting = webSettingRepository.save(logoSetting);
 
             // Delete the old file
