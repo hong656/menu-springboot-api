@@ -1,6 +1,8 @@
 package com.aditi.menu.menu_backend.service;
 
 import com.aditi.menu.menu_backend.repository.MenuItemRepository;
+import com.aditi.menu.menu_backend.repository.MenuTypeRepository;
+import com.aditi.menu.menu_backend.entity.MenuType;
 import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,9 @@ public class MenuItemService {
     @Autowired
     private MenuItemRepository menuItemRepository;
 
+    @Autowired
+    private MenuTypeRepository menuTypeRepository;
+
     private final String UPLOAD_DIR = "./uploads/images/";
 
     public Page<MenuItem> getAllMenuItems(Pageable pageable) {
@@ -38,7 +43,11 @@ public class MenuItemService {
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
     }
 
-    public MenuItem createMenuItem(MenuItem menuItem, MultipartFile image) throws IOException {
+    public MenuItem createMenuItem(MenuItem menuItem, Integer menuTypeId, MultipartFile image) throws IOException {
+        MenuType menuType = menuTypeRepository.findById(menuTypeId)
+                .orElseThrow(() -> new RuntimeException("MenuType not found with id: " + menuTypeId));
+        menuItem.setMenuType(menuType);
+
         if (image != null && !image.isEmpty()) {
             String imageUrl = saveImage(image);
             menuItem.setImageUrl(imageUrl);
@@ -46,20 +55,20 @@ public class MenuItemService {
         return menuItemRepository.save(menuItem);
     }
 
-    public MenuItem updateMenuItem(Integer id, String name, String description, Integer priceCents, Integer status, String type, MultipartFile image) throws IOException {
-        MenuItem existingMenuItem = menuItemRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
+    public MenuItem updateMenuItem(Integer id, String name, String description, Integer priceCents, Integer status, Integer menuTypeId, MultipartFile image) throws IOException {
+        MenuItem existingMenuItem = getMenuItemById(id);
+        MenuType menuType = menuTypeRepository.findById(menuTypeId)
+                .orElseThrow(() -> new RuntimeException("MenuType not found with id: " + menuTypeId));
 
         existingMenuItem.setName(name);
         existingMenuItem.setDescription(description);
         existingMenuItem.setPriceCents(priceCents);
-        existingMenuItem.setType(type);
+        existingMenuItem.setMenuType(menuType);
         if (status != null) {
             existingMenuItem.setStatus(status);
         }
 
         if (image != null && !image.isEmpty()) {
-            // Delete old image if it exists
             if (existingMenuItem.getImageUrl() != null && !existingMenuItem.getImageUrl().isEmpty()) {
                 deleteImage(existingMenuItem.getImageUrl());
             }
