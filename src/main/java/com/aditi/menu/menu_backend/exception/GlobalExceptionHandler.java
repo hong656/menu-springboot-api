@@ -16,14 +16,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Object> handleMethodArgumentTypeMismatch(
             MethodArgumentTypeMismatchException ex, WebRequest request) {
-        
+            Class<?> requiredType = ex.getRequiredType();
+
+        String requiredTypeName = (requiredType != null) ? requiredType.getSimpleName() : "[unknown type]";
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", System.currentTimeMillis());
         body.put("status", HttpStatus.BAD_REQUEST.value());
         body.put("error", "Bad Request");
-        body.put("message", String.format("The parameter '%s' of value '%s' could not be converted to type '%s'", 
-                                          ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName()));
-        body.put("path", request.getDescription(false).substring(4)); // remove "uri="
+        body.put("message", String.format("The parameter '%s' of value '%s' could not be converted to type '%s'", ex.getName(), ex.getValue(), requiredTypeName));
+        body.put("path", request.getDescription(false).substring(4));
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
