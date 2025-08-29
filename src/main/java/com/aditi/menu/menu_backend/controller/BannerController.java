@@ -26,9 +26,11 @@ public class BannerController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllBanners(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search, // Add search parameter
+            @RequestParam(required = false) Integer status) { // Add status filter
         Pageable pageable = PageRequest.of(page, size);
-        Page<Banner> bannerPage = bannerService.getAllBanners(pageable);
+        Page<Banner> bannerPage = bannerService.getAllBanners(pageable, search, status);
 
         Map<String, Object> response = new HashMap<>();
         response.put("items", bannerPage.getContent());
