@@ -33,8 +33,12 @@ public class PublicController {
     private WebSettingService webSettingService;
 
     @GetMapping("/menu-items")
-    public List<MenuItem> getAllPublicMenuItems() {
-        return menuItemService.getAllPublicMenuItems();
+    public ResponseEntity<List<MenuItem>> getPublicMenuItems(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer menuTypeId) {
+        
+        List<MenuItem> items = menuItemService.getAllPublicMenuItems(search, menuTypeId);
+        return ResponseEntity.ok(items);
     }
 
     @GetMapping("/banners")

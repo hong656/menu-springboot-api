@@ -26,9 +26,13 @@ public class MenuItemController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllMenuItems(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) String search,
+        @RequestParam(required = false) Integer status,
+        @RequestParam(required = false) Integer menuTypeId) {
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<MenuItem> menuItemPage = menuItemService.getAllMenuItems(pageable);
+        Page<MenuItem> menuItemPage = menuItemService.getAllMenuItems(pageable, search, status, menuTypeId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("items", menuItemPage.getContent());

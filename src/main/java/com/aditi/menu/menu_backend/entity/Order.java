@@ -26,7 +26,7 @@ public class Order {
     @Column(columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: received, 2: preparing, 3: completed, 4: canceled'")
     private Integer status = 1;
 
-    @Lob
+    @Column(length = 1024)
     private String remark;
 
     @Column(name = "total_cents", nullable = false)

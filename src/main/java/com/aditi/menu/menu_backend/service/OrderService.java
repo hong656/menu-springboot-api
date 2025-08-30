@@ -8,10 +8,11 @@ import com.aditi.menu.menu_backend.entity.RestaurantTable;
 import com.aditi.menu.menu_backend.repository.MenuItemRepository;
 import com.aditi.menu.menu_backend.repository.OrderRepository;
 import com.aditi.menu.menu_backend.repository.RestaurantTableRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.aditi.menu.menu_backend.specs.OrderSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,17 +23,21 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final RestaurantTableRepository restaurantTableRepository;
+    private final OrderSpecification orderSpecification;
 
-    @Autowired
-    private MenuItemRepository menuItemRepository;
+    public OrderService(OrderRepository orderRepository, MenuItemRepository menuItemRepository, RestaurantTableRepository restaurantTableRepository, OrderSpecification orderSpecification) {
+        this.orderRepository = orderRepository;
+        this.menuItemRepository = menuItemRepository;
+        this.restaurantTableRepository = restaurantTableRepository;
+        this.orderSpecification = orderSpecification;
+    }
 
-    @Autowired
-    private RestaurantTableRepository restaurantTableRepository;
-
-    public Page<OrderResponseDto> getAllOrders(Pageable pageable) {
-        Page<Order> orderPage = orderRepository.findAll(pageable);
+    public Page<OrderResponseDto> getAllOrders(Pageable pageable, String search, Integer status) {
+        Specification<Order> spec = orderSpecification.getOrders(search, status);
+        Page<Order> orderPage = orderRepository.findAll(spec, pageable);
         List<OrderResponseDto> orderResponseDtos = orderPage.getContent().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
