@@ -2,6 +2,7 @@ package com.aditi.menu.menu_backend.controller;
 
 import com.aditi.menu.menu_backend.entity.User;
 import com.aditi.menu.menu_backend.repository.UserRepository;
+import com.aditi.menu.menu_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -49,12 +50,17 @@ public class ProfileController {
         return ResponseEntity.notFound().build();
     }
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping("/users")
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer status) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<User> userPage = userRepository.findAllByStatusNot(3, pageable);
+        Page<User> userPage = userService.getAllUsers(pageable, search, status);
 
         Page<UserProfile> userProfilePage = userPage.map(user -> new UserProfile(
                 user.getId(),

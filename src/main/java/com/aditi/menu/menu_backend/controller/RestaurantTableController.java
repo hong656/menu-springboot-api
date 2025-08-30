@@ -26,9 +26,11 @@ public class RestaurantTableController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllTables(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer status) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<RestaurantTable> tablePage = tableService.getAllTables(pageable);
+        Page<RestaurantTable> tablePage = tableService.getAllTables(pageable, search, status);
 
         Map<String, Object> response = new HashMap<>();
         response.put("items", tablePage.getContent());

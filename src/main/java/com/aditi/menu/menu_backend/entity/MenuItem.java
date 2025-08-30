@@ -18,7 +18,7 @@ public class MenuItem {
     @JoinColumn(name = "menu_type_id", nullable = false)
     private MenuType menuType;
 
-    @Lob
+    @Column(length = 1024)
     private String description;
 
     @Column(name = "price_cents", nullable = false)

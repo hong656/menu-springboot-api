@@ -5,6 +5,8 @@ import com.aditi.menu.menu_backend.entity.Order;
 import com.aditi.menu.menu_backend.entity.RestaurantTable;
 import com.aditi.menu.menu_backend.repository.OrderRepository;
 import com.aditi.menu.menu_backend.repository.RestaurantTableRepository;
+import com.aditi.menu.menu_backend.specs.TableSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +23,18 @@ public class RestaurantTableService {
     private final RestaurantTableRepository tableRepository;
     private final OrderRepository orderRepository;
 
-    public RestaurantTableService(RestaurantTableRepository tableRepository, OrderRepository orderRepository) {
+    private final TableSpecification tableSpecification;
+
+    public RestaurantTableService(RestaurantTableRepository tableRepository, OrderRepository orderRepository, TableSpecification tableSpecification) {
         this.tableRepository = tableRepository;
         this.orderRepository = orderRepository;
+        this.tableSpecification = tableSpecification;
     }
 
     @Transactional(readOnly = true)
-    public Page<RestaurantTable> getAllTables(Pageable pageable) {
-        return tableRepository.findAllByStatusNot(3, pageable);
+    public Page<RestaurantTable> getAllTables(Pageable pageable, String search, Integer status) {
+        Specification<RestaurantTable> spec = tableSpecification.getRestaurantTable(search, status);
+        return tableRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)

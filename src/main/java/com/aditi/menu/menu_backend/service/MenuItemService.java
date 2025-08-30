@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.aditi.menu.menu_backend.specs.MenuItemSpecification;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,14 +30,19 @@ public class MenuItemService {
     @Autowired
     private MenuTypeRepository menuTypeRepository;
 
-    private final String UPLOAD_DIR = "./uploads/images/";
+    @Autowired
+    private MenuItemSpecification menuItemSpecification;
 
-    public Page<MenuItem> getAllMenuItems(Pageable pageable) {
-        return menuItemRepository.findAllByStatusNot(3, pageable);
+    private final String UPLOAD_DIR = "./uploads/images/";
+    
+    public Page<MenuItem> getAllMenuItems(Pageable pageable, String search, Integer status, Integer menuTypeId) {
+        Specification<MenuItem> spec = menuItemSpecification.getMenuItems(search, status, menuTypeId);
+        return menuItemRepository.findAll(spec, pageable);
     }
 
-    public List<MenuItem> getAllPublicMenuItems() {
-        return menuItemRepository.findAllByStatusNotIn(List.of(2, 3));
+    public List<MenuItem> getAllPublicMenuItems(String search, Integer menuTypeId) {
+        Specification<MenuItem> spec = menuItemSpecification.getPublicMenuItems(search, menuTypeId);
+        return menuItemRepository.findAll(spec);
     }
 
     public MenuItem getMenuItemById(Integer id) {
