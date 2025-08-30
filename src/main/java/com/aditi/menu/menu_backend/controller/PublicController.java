@@ -4,10 +4,12 @@ import com.aditi.menu.menu_backend.dto.OrderRequestDto;
 import com.aditi.menu.menu_backend.dto.OrderResponseDto;
 import com.aditi.menu.menu_backend.entity.Banner;
 import com.aditi.menu.menu_backend.entity.MenuItem;
+import com.aditi.menu.menu_backend.entity.MenuType;
 import com.aditi.menu.menu_backend.entity.WebSetting;
 import com.aditi.menu.menu_backend.service.MenuItemService;
 import com.aditi.menu.menu_backend.service.OrderService;
 import com.aditi.menu.menu_backend.service.WebSettingService;
+import com.aditi.menu.menu_backend.service.MenuTypeService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,14 @@ public class PublicController {
 
     @Autowired
     private WebSettingService webSettingService;
+
+    @Autowired
+    private MenuTypeService menuTypeService;
+
+    @GetMapping("/menu-types")
+    public List<MenuType> getAllTypes() {
+        return menuTypeService.getAllTypes();
+    }
 
     @GetMapping("/menu-items")
     public ResponseEntity<List<MenuItem>> getPublicMenuItems(
