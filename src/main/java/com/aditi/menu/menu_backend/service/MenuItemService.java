@@ -3,8 +3,12 @@ package com.aditi.menu.menu_backend.service;
 import com.aditi.menu.menu_backend.repository.MenuItemRepository;
 import com.aditi.menu.menu_backend.repository.MenuTypeRepository;
 import com.aditi.menu.menu_backend.entity.MenuType;
+import com.aditi.menu.menu_backend.dto.MenuItemRequestDto;
+import com.aditi.menu.menu_backend.dto.MenuItemTranslationDto;
 import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
+import com.aditi.menu.menu_backend.entity.MenuItemTranslation;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +24,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.function.Function;
 
 @Service
 public class MenuItemService {
@@ -50,10 +57,25 @@ public class MenuItemService {
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
     }
 
-    public MenuItem createMenuItem(MenuItem menuItem, Integer menuTypeId, MultipartFile image) throws IOException {
-        MenuType menuType = menuTypeRepository.findById(menuTypeId)
-                .orElseThrow(() -> new RuntimeException("MenuType not found with id: " + menuTypeId));
+    public MenuItem createMenuItem(MenuItemRequestDto menuItemDto, MultipartFile image) throws IOException {
+        MenuType menuType = menuTypeRepository.findById(menuItemDto.getMenuTypeId())
+            .orElseThrow(() -> new RuntimeException("MenuType not found with id: " + menuItemDto.getMenuTypeId()));
+
+        MenuItem menuItem = new MenuItem();
+        menuItem.setPriceCents(menuItemDto.getPriceCents());
+        menuItem.setStatus(menuItemDto.getStatus());
         menuItem.setMenuType(menuType);
+
+        List<MenuItemTranslation> translations = menuItemDto.getTranslations().stream()
+                .map(dto -> {
+                    MenuItemTranslation translation = new MenuItemTranslation();
+                    translation.setLanguageCode(dto.getLanguageCode());
+                    translation.setName(dto.getName());
+                    translation.setDescription(dto.getDescription());
+                    translation.setMenuItem(menuItem);
+                    return translation;
+                }).collect(Collectors.toList());
+        menuItem.setTranslations(translations);
 
         if (image != null && !image.isEmpty()) {
             String imageUrl = saveImage(image);
@@ -62,18 +84,52 @@ public class MenuItemService {
         return menuItemRepository.save(menuItem);
     }
 
-    public MenuItem updateMenuItem(Integer id, String name, String description, Integer priceCents, Integer status, Integer menuTypeId, MultipartFile image) throws IOException {
+    @Transactional // Add @Transactional to ensure all DB operations are in one transaction
+    public MenuItem updateMenuItem(Integer id, MenuItemRequestDto menuItemDto, MultipartFile image) throws IOException {
         MenuItem existingMenuItem = getMenuItemById(id);
-        MenuType menuType = menuTypeRepository.findById(menuTypeId)
-                .orElseThrow(() -> new RuntimeException("MenuType not found with id: " + menuTypeId));
+        MenuType menuType = menuTypeRepository.findById(menuItemDto.getMenuTypeId())
+                .orElseThrow(() -> new RuntimeException("MenuType not found with id: " + menuItemDto.getMenuTypeId()));
 
-        existingMenuItem.setName(name);
-        existingMenuItem.setDescription(description);
-        existingMenuItem.setPriceCents(priceCents);
+        existingMenuItem.setPriceCents(menuItemDto.getPriceCents());
         existingMenuItem.setMenuType(menuType);
-        if (status != null) {
-            existingMenuItem.setStatus(status);
+        if (menuItemDto.getStatus() != null) {
+            existingMenuItem.setStatus(menuItemDto.getStatus());
         }
+
+        // --- START OF THE FIX ---
+
+        // 1. Create a Map of existing translations for easy lookup by language code.
+        Map<String, MenuItemTranslation> existingTranslationsMap = existingMenuItem.getTranslations().stream()
+                .collect(Collectors.toMap(MenuItemTranslation::getLanguageCode, Function.identity()));
+        
+        // 2. Process incoming translations from the request DTO.
+        for (MenuItemTranslationDto translationDto : menuItemDto.getTranslations()) {
+            MenuItemTranslation existingTranslation = existingTranslationsMap.get(translationDto.getLanguageCode());
+
+            if (existingTranslation != null) {
+                // 3. IF IT EXISTS: Update its name and description.
+                existingTranslation.setName(translationDto.getName());
+                existingTranslation.setDescription(translationDto.getDescription());
+                // Remove it from the map, so we know it's been processed.
+                existingTranslationsMap.remove(translationDto.getLanguageCode());
+            } else {
+                // 4. IF IT DOES NOT EXIST: Create a new translation and add it to the item.
+                MenuItemTranslation newTranslation = new MenuItemTranslation();
+                newTranslation.setLanguageCode(translationDto.getLanguageCode());
+                newTranslation.setName(translationDto.getName());
+                newTranslation.setDescription(translationDto.getDescription());
+                newTranslation.setMenuItem(existingMenuItem); // Link it to the parent
+                existingMenuItem.getTranslations().add(newTranslation);
+            }
+        }
+
+        // 5. IF any translations are left in the map, it means they were not in the new data
+        //    and should be removed. This handles deleting a translation.
+        if (!existingTranslationsMap.isEmpty()) {
+            existingMenuItem.getTranslations().removeAll(existingTranslationsMap.values());
+        }
+
+        // --- END OF THE FIX ---
 
         if (image != null && !image.isEmpty()) {
             if (existingMenuItem.getImageUrl() != null && !existingMenuItem.getImageUrl().isEmpty()) {

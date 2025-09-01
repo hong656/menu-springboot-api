@@ -2,6 +2,7 @@ package com.aditi.menu.menu_backend.service;
 
 import com.aditi.menu.menu_backend.dto.*;
 import com.aditi.menu.menu_backend.entity.MenuItem;
+import com.aditi.menu.menu_backend.entity.MenuItemTranslation;
 import com.aditi.menu.menu_backend.entity.Order;
 import com.aditi.menu.menu_backend.entity.OrderItem;
 import com.aditi.menu.menu_backend.entity.RestaurantTable;
@@ -96,11 +97,16 @@ public class OrderService {
 
         for (OrderItemRequestDto itemDto : orderRequestDto.getItems()) {
             MenuItem menuItem = menuItemRepository.findById(itemDto.getMenuItemId())
-                    .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + itemDto.getMenuItemId()));
+                .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + itemDto.getMenuItemId()));
 
-            // Check if the menu item is active (status 1)
             if (menuItem.getStatus() != 1) {
-                throw new RuntimeException("MenuItem '" + menuItem.getName() + "' is not available for order.");
+                String itemName = menuItem.getTranslations().stream()
+                    .filter(t -> "en".equals(t.getLanguageCode()))
+                    .findFirst()
+                    .map(MenuItemTranslation::getName)
+                    .orElse("Item ID: " + menuItem.getId());
+
+                throw new RuntimeException("MenuItem '" + itemName + "' is not available for order.");
             }
 
             OrderItem orderItem = new OrderItem();
@@ -141,10 +147,16 @@ public class OrderService {
 
             MenuItemResponseDto menuItemDto = new MenuItemResponseDto();
             menuItemDto.setId(orderItem.getMenuItem().getId());
-            menuItemDto.setName(orderItem.getMenuItem().getName());
-            menuItemDto.setDescription(orderItem.getMenuItem().getDescription());
             menuItemDto.setPriceCents(orderItem.getMenuItem().getPriceCents());
             menuItemDto.setImageUrl(orderItem.getMenuItem().getImageUrl());
+            List<MenuItemTranslationDto> translationDtos = orderItem.getMenuItem().getTranslations().stream().map(trans -> {
+                MenuItemTranslationDto transDto = new MenuItemTranslationDto();
+                transDto.setLanguageCode(trans.getLanguageCode());
+                transDto.setName(trans.getName());
+                transDto.setDescription(trans.getDescription());
+                return transDto;
+            }).collect(Collectors.toList());
+            menuItemDto.setTranslations(translationDtos);
             itemDto.setMenuItem(menuItemDto);
 
             itemDto.setQuantity(orderItem.getQuantity());

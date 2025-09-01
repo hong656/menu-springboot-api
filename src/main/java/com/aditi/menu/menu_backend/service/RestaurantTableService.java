@@ -140,10 +140,16 @@ public class RestaurantTableService {
 
                 MenuItemResponseDto menuItemDto = new MenuItemResponseDto();
                 menuItemDto.setId(orderItem.getMenuItem().getId());
-                menuItemDto.setName(orderItem.getMenuItem().getName());
-                menuItemDto.setDescription(orderItem.getMenuItem().getDescription());
                 menuItemDto.setPriceCents(orderItem.getMenuItem().getPriceCents());
                 menuItemDto.setImageUrl(orderItem.getMenuItem().getImageUrl());
+                List<MenuItemTranslationDto> translationDtos = orderItem.getMenuItem().getTranslations().stream().map(trans -> {
+                    MenuItemTranslationDto transDto = new MenuItemTranslationDto();
+                    transDto.setLanguageCode(trans.getLanguageCode());
+                    transDto.setName(trans.getName());
+                    transDto.setDescription(trans.getDescription());
+                    return transDto;
+                }).collect(Collectors.toList());
+                menuItemDto.setTranslations(translationDtos);
                 itemDto.setMenuItem(menuItemDto);
 
                 itemDto.setQuantity(orderItem.getQuantity());
