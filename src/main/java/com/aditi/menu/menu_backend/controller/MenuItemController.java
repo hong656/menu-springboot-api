@@ -1,5 +1,6 @@
 package com.aditi.menu.menu_backend.controller;
 
+import com.aditi.menu.menu_backend.dto.MenuItemRequestDto;
 import com.aditi.menu.menu_backend.dto.StatusUpdateDto;
 import com.aditi.menu.menu_backend.entity.MenuItem;
 import com.aditi.menu.menu_backend.service.MenuItemService;
@@ -53,30 +54,19 @@ public class MenuItemController {
 
     @PostMapping
     public MenuItem createMenuItem(
-        @RequestParam("name") String name,
-        @RequestParam("description") String description,
-        @RequestParam("priceCents") Integer priceCents,
-        @RequestParam("status") Integer status,
-        @RequestParam("menuTypeId") Integer menuTypeId,
-        @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
-        MenuItem menuItem = new MenuItem();
-        menuItem.setName(name);
-        menuItem.setDescription(description);
-        menuItem.setPriceCents(priceCents);
-        menuItem.setStatus(status);
-        return menuItemService.createMenuItem(menuItem, menuTypeId, image);
+        @RequestPart("menuItem") String menuItemDtoString,
+        @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        MenuItemRequestDto menuItemDto = new com.fasterxml.jackson.databind.ObjectMapper().readValue(menuItemDtoString, MenuItemRequestDto.class);
+        return menuItemService.createMenuItem(menuItemDto, image);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<MenuItem> updateMenuItem(
         @PathVariable Integer id,
-        @RequestParam("name") String name,
-        @RequestParam("description") String description,
-        @RequestParam("priceCents") Integer priceCents,
-        @RequestParam("status") Integer status,
-        @RequestParam("menuTypeId") Integer menuTypeId,
-        @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
-        return ResponseEntity.ok(menuItemService.updateMenuItem(id, name, description, priceCents, status, menuTypeId, image));
+        @RequestPart("menuItem") String menuItemDtoString,
+        @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        MenuItemRequestDto menuItemDto = new com.fasterxml.jackson.databind.ObjectMapper().readValue(menuItemDtoString, MenuItemRequestDto.class);
+        return ResponseEntity.ok(menuItemService.updateMenuItem(id, menuItemDto, image));
     }
 
     @DeleteMapping("/{id}")
