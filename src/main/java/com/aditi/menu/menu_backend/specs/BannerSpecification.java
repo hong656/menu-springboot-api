@@ -15,7 +15,6 @@ public class BannerSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // IMPORTANT: Exclude soft-deleted items by default unless a specific status is requested
             predicates.add(criteriaBuilder.notEqual(root.get("status"), 3));
 
             if (search != null && !search.isEmpty()) {

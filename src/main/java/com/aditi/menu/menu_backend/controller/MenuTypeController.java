@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.aditi.menu.menu_backend.dto.MenuTypeRequestDto;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,13 +54,13 @@ public class MenuTypeController {
     }
 
     @PostMapping
-    public MenuType createMenuType(@RequestBody MenuType menuType) {
-        return menuTypeService.createMenuType(menuType);
+    public MenuType createMenuType(@RequestBody MenuTypeRequestDto menuTypeDto) {
+        return menuTypeService.createMenuType(menuTypeDto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MenuType> updateMenuType(@PathVariable Integer id, @RequestBody MenuType menuTypeDetails) {
-        return ResponseEntity.ok(menuTypeService.updateMenuType(id, menuTypeDetails));
+    public ResponseEntity<MenuType> updateMenuType(@PathVariable Integer id, @RequestBody MenuTypeRequestDto menuTypeDto) {
+        return ResponseEntity.ok(menuTypeService.updateMenuType(id, menuTypeDto));
     }
 
     @PatchMapping("/{id}/status")
