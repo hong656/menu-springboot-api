@@ -1,15 +1,18 @@
 package com.aditi.menu.menu_backend.dto;
+import java.util.Set;
 
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
     private String username;
     private String email;
+    private Set<String> roles;
 
-    public JwtResponse(String accessToken, String username, String email) {
+    public JwtResponse(String accessToken, String username, String email, Set<String> roles) {
         this.token = accessToken;
         this.username = username;
         this.email = email;
+        this.roles = roles;
     }
 
     public String getToken() { return token; }
@@ -20,4 +23,5 @@ public class JwtResponse {
     public void setUsername(String username) { this.username = username; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public Set<String> getRoles() { return roles; }
 }

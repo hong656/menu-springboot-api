@@ -1,6 +1,8 @@
 package com.aditi.menu.menu_backend.controller;
 
+import com.aditi.menu.menu_backend.entity.Role;
 import com.aditi.menu.menu_backend.entity.User;
+import com.aditi.menu.menu_backend.repository.RoleRepository;
 import com.aditi.menu.menu_backend.repository.UserRepository;
 import com.aditi.menu.menu_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +11,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,29 +34,43 @@ public class ProfileController {
     @Autowired
     private PasswordEncoder encoder;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private UserService userService;
+
+    private Set<String> mapRolesToStrings(Set<Role> roles) {
+        if (roles == null) {
+            return new HashSet<>();
+        }
+        return roles.stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<?> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent()) {
-            User currentUser = user.get();
+
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            User currentUser = userOpt.get();
+            Set<String> roles = mapRolesToStrings(currentUser.getRoles());
+
             UserProfile profile = new UserProfile(
                 currentUser.getId(),
                 currentUser.getUsername(),
                 currentUser.getEmail(),
                 currentUser.getFullName(),
-                currentUser.getRole(),
+                roles, // Correctly pass the Set<String>
                 currentUser.getStatus()
             );
             return ResponseEntity.ok(profile);
         }
         return ResponseEntity.notFound().build();
     }
-
-    @Autowired
-    private UserService userService;
 
     @GetMapping("/users")
     public ResponseEntity<Map<String, Object>> getAllUsers(
@@ -62,13 +81,16 @@ public class ProfileController {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage = userService.getAllUsers(pageable, search, status);
 
-        Page<UserProfile> userProfilePage = userPage.map(user -> new UserProfile(
+        Page<UserProfile> userProfilePage = userPage.map(user -> {
+            Set<String> roles = mapRolesToStrings(user.getRoles());
+            return new UserProfile(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getFullName(),
-                user.getRole(),
-                user.getStatus()));
+                roles, // Correctly pass the Set<String>
+                user.getStatus());
+        });
 
         Map<String, Object> response = new HashMap<>();
         response.put("items", userProfilePage.getContent());
@@ -112,13 +134,14 @@ public class ProfileController {
             }
             
             User updatedUser = userRepository.save(user);
+            Set<String> roles = mapRolesToStrings(updatedUser.getRoles());
             
             UserProfile profile = new UserProfile(
                 updatedUser.getId(),
                 updatedUser.getUsername(),
                 updatedUser.getEmail(),
                 updatedUser.getFullName(),
-                updatedUser.getRole(),
+                roles, // Correctly pass the Set<String>
                 updatedUser.getStatus()
             );
             
@@ -136,27 +159,37 @@ public class ProfileController {
             if (request.getUsername() != null) {
                 user.setUsername(request.getUsername());
             }
-            if (request.getPassword() != null) {
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
                 user.setPassword(encoder.encode(request.getPassword()));
             }
             if (request.getEmail() != null) {
                 user.setEmail(request.getEmail());
             }
-            if (request.getRole() != null) {
-                user.setRole(request.getRole());
-            }
             if (request.getStatus() != null) {
                 user.setStatus(request.getStatus());
             }
 
+            // --- CORRECTED ROLE UPDATE LOGIC ---
+            if (request.getRoles() != null) {
+                Set<String> strRoles = request.getRoles();
+                Set<Role> roles = new HashSet<>();
+                for (String roleName : strRoles) {
+                    Role role = roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new RuntimeException("Error: Role '" + roleName + "' is not found."));
+                    roles.add(role);
+                }
+                user.setRoles(roles);
+            }
+
             User updatedUser = userRepository.save(user);
+            Set<String> responseRoles = mapRolesToStrings(updatedUser.getRoles());
 
             UserProfile profile = new UserProfile(
                 updatedUser.getId(),
                 updatedUser.getUsername(),
                 updatedUser.getEmail(),
                 updatedUser.getFullName(),
-                updatedUser.getRole(),
+                responseRoles, // Correctly pass the Set<String>
                 updatedUser.getStatus()
             );
 
@@ -175,13 +208,14 @@ public class ProfileController {
             if (request.getStatus() != null && request.getStatus() == 3) {
                 user.setStatus(request.getStatus());
                 User updatedUser = userRepository.save(user);
+                Set<String> roles = mapRolesToStrings(updatedUser.getRoles());
 
                 UserProfile profile = new UserProfile(
                     updatedUser.getId(),
                     updatedUser.getUsername(),
                     updatedUser.getEmail(),
                     updatedUser.getFullName(),
-                    updatedUser.getRole(),
+                    roles,
                     updatedUser.getStatus()
                 );
 
@@ -200,15 +234,15 @@ class UserProfile {
     private String username;
     private String email;
     private String fullName;
-    private int role;
+    private Set<String> roles;
     private int status;
 
-    public UserProfile(Long id, String username, String email, String fullName, int role, int status) {
+    public UserProfile(Long id, String username, String email, String fullName, Set<String> roles, int status) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
-        this.role = role;
+        this.roles = roles;
         this.status = status;
     }
 
@@ -217,8 +251,9 @@ class UserProfile {
     public String getUsername() { return username; }
     public String getEmail() { return email; }
     public String getFullName() { return fullName; }
-    public int getRole() { return role; }
     public int getStatus() { return status; }
+    public Set<String> getRoles() { return roles; }
+
 }
 
 class TokenInfo {
@@ -247,13 +282,14 @@ class UpdateProfileRequest {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    
 }
 
 class UpdateUserRequest {
     private String username;
     private String password;
     private String email;
-    private Integer role;
+    private Set<String> roles;
     private Integer status;
 
     // Getters and Setters
@@ -263,10 +299,10 @@ class UpdateUserRequest {
     public void setPassword(String password) { this.password = password; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public Integer getRole() { return role; }
-    public void setRole(Integer role) { this.role = role; }
+    public void setRoles(Set<String> roles) { this.roles = roles; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+    public Set<String> getRoles() { return roles; }
 }
 
 class DeleteUserRequest {

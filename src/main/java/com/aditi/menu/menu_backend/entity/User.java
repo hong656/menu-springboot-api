@@ -6,10 +6,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "admin_users")
+@Table(name = "users") // Renamed from "admin_users" for clarity
 public class User implements UserDetails {
 
     @Id
@@ -28,40 +30,37 @@ public class User implements UserDetails {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "role", nullable = false, columnDefinition = "TINYINT DEFAULT 2 COMMENT '1: Tester, 2: User, 3: Admin'")
-    private int role = Role.USER;
+    // REMOVED: private int role;
 
     @Column(name = "status", nullable = false, columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: active, 2: inactive, 3: deleted'")
-    private int status = Status.ACTIVE;
+    private int status = 1; // Assuming 1 is ACTIVE
 
-    // Constructors
-    public User() {}
-
-    public User(String username, String password, String email) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-    }
-
-    public User(String username, String password, String email, String fullName) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.fullName = fullName;
-    }
-
-    public User(String username, String password, String email, int role) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.role = role;
-    }
+    @ManyToMany(fetch = FetchType.EAGER) // EAGER fetch for roles to be available for security checks
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     // UserDetails implementation
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + Role.toString(this.role)));
+        // This now returns all permissions from all roles assigned to the user.
+        // e.g., "ROLE_ADMIN", "article:create", "user:delete"
+        return this.roles.stream()
+                .flatMap(role -> role.getPermissionDetails().stream())
+                .map(permissionDetail -> new SimpleGrantedAuthority(permissionDetail.getSlug()))
+                .collect(Collectors.toList());
     }
+    
+    // --- Other UserDetails methods (isAccountNonExpired, etc.) remain the same ---
+
+    @Override
+    public String getPassword() { return password; }
+
+    @Override
+    public String getUsername() { return username; }
 
     @Override
     public boolean isAccountNonExpired() { return true; }
@@ -73,29 +72,20 @@ public class User implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return this.status == Status.ACTIVE; }
+    public boolean isEnabled() { return this.status == 1; }
 
-    // Getters and Setters
+    // --- Standard Getters and Setters ---
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
-    @Override
-    public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-
-    @Override
-    public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
-
-    public int getRole() { return role; }
-    public void setRole(int role) { this.role = role; }
-
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
+    public Set<Role> getRoles() { return roles; }
+    public void setRoles(Set<Role> roles) { this.roles = roles; }
 }
