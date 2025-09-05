@@ -1,4 +1,4 @@
-package com.aditi.menu.menu_backend.config;
+package com.aditi.menu.menu_backend.config; // Or your chosen package for seeders
 
 import com.aditi.menu.menu_backend.entity.*;
 import com.aditi.menu.menu_backend.repository.*;
@@ -8,10 +8,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -65,15 +64,35 @@ public class DataSeeder implements CommandLineRunner {
         if (roleRepository.count() == 0 && userRepository.count() == 0) {
             System.out.println("Seeding RBAC data (Permissions, Roles, Users)...");
 
-            // 1. Seed Permissions (The most granular level)
-            Set<PermissionDetail> adminPermissions = seedPermissions();
+            // 1. Create all possible permissions and store them in a map for easy lookup
+            Map<String, PermissionDetail> allPermissions = seedAllPermissions();
 
-            // 2. Seed Roles and assign permissions
+            // 2. Define permission sets for each role
+            Set<PermissionDetail> adminPermissions = new HashSet<>(allPermissions.values());
+
+            Set<PermissionDetail> userPermissions = Stream.of(
+                "menu:read", "menu-type:read", "table:read", "order:create", "order:read", "order:update"
+            ).map(allPermissions::get).collect(Collectors.toSet());
+            
+            Set<PermissionDetail> testerPermissions = Stream.of(
+                "menu:create", "menu:read", "menu:update",
+                "menu-type:create", "menu-type:read", "menu-type:update",
+                "table:read", "order:create", "order:read", "order:update"
+            ).map(allPermissions::get).collect(Collectors.toSet());
+
+            Set<PermissionDetail> guestPermissions = Stream.of(
+                "menu:read", "menu-type:read", "table:read"
+            ).map(allPermissions::get).collect(Collectors.toSet());
+
+
+            // 3. Seed Roles and assign the permission sets
             Role adminRole = createRole("ADMIN", "Administrator with all permissions", adminPermissions);
-            Role userRole = createRole("USER", "Standard user with basic permissions", new HashSet<>());
+            Role userRole = createRole("USER", "Standard user with basic permissions", userPermissions);
+            Role testerRole = createRole("TESTER", "User with testing permissions", testerPermissions);
+            Role guestRole = createRole("GUEST", "Guest user with limited permissions", guestPermissions);
 
-            // 3. Seed default Admin and User accounts
-            seedUsers(adminRole, userRole);
+            // 4. Seed default user accounts for each role
+            seedUsers(adminRole, userRole, testerRole, guestRole);
 
             System.out.println("-> RBAC data has been seeded.");
         } else {
@@ -81,49 +100,60 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private Set<PermissionDetail> seedPermissions() {
-        Set<PermissionDetail> permissions = new HashSet<>();
+    private Map<String, PermissionDetail> seedAllPermissions() {
+        Map<String, PermissionDetail> permissionsMap = new HashMap<>();
 
-        // User Management Permissions
-        PermissionGroup userManagementGroup = createPermissionGroup("User Management", 1);
-        Permission userPermission = createPermission("Manage Users", userManagementGroup);
-        permissions.add(createPermissionDetail("Create Users", "user:create", userPermission));
-        permissions.add(createPermissionDetail("Read Users", "user:read", userPermission));
-        permissions.add(createPermissionDetail("Update Users", "user:update", userPermission));
-        permissions.add(createPermissionDetail("Delete Users", "user:delete", userPermission));
+        // --- Authentication Group ---
+        PermissionGroup authGroup = createPermissionGroup("Authentication", 1);
+        createCrudPermissions(permissionsMap, "Users", "user", authGroup);
+        createCrudPermissions(permissionsMap, "Permissions", "permission", authGroup);
+        createCrudPermissions(permissionsMap, "Roles", "role", authGroup);
 
-        // You can add more permission groups and details here
-        // Example: Content Management
-        // PermissionGroup contentManagementGroup = createPermissionGroup("Content Management", 2);
-        // Permission contentPermission = createPermission("Manage Content", contentManagementGroup);
-        // permissions.add(createPermissionDetail("Create Content", "content:create", contentPermission));
-        
-        return permissions;
+        // --- Menu Management Group ---
+        PermissionGroup menuGroup = createPermissionGroup("Menu Management", 2);
+        createCrudPermissions(permissionsMap, "Menu Items", "menu", menuGroup);
+        createCrudPermissions(permissionsMap, "Menu Types", "menu-type", menuGroup);
+        createCrudPermissions(permissionsMap, "Tables", "table", menuGroup);
+        createCrudPermissions(permissionsMap, "Orders", "order", menuGroup);
+
+        // --- Interface Settings Group ---
+        PermissionGroup interfaceGroup = createPermissionGroup("Interface Settings", 3);
+        createCrudPermissions(permissionsMap, "Banners", "banner", interfaceGroup);
+        createCrudPermissions(permissionsMap, "General Settings", "general-setting", interfaceGroup);
+
+        return permissionsMap;
     }
 
-    private void seedUsers(Role adminRole, Role userRole) {
-        // Create an Admin User
-        User adminUser = new User();
-        adminUser.setUsername("admin");
-        adminUser.setPassword(passwordEncoder.encode("password")); // Change this in a real application
-        adminUser.setEmail("admin@example.com");
-        adminUser.setFullName("Admin User");
-        adminUser.setStatus(1); // Active
-        adminUser.setRoles(Set.of(adminRole));
-        userRepository.save(adminUser);
+    // Helper to create all 4 CRUD permissions for a given resource
+    private void createCrudPermissions(Map<String, PermissionDetail> map, String name, String slugPrefix, PermissionGroup group) {
+        Permission permission = createPermission(name, group);
+        map.put(slugPrefix + ":create", createPermissionDetail("Create " + name, slugPrefix + ":create", permission));
+        map.put(slugPrefix + ":read",   createPermissionDetail("Read " + name,   slugPrefix + ":read",   permission));
+        map.put(slugPrefix + ":update", createPermissionDetail("Update " + name, slugPrefix + ":update", permission));
+        map.put(slugPrefix + ":delete", createPermissionDetail("Delete " + name, slugPrefix + ":delete", permission));
+    }
 
-        // Create a Standard User
-        User standardUser = new User();
-        standardUser.setUsername("user");
-        standardUser.setPassword(passwordEncoder.encode("password"));
-        standardUser.setEmail("user@example.com");
-        standardUser.setFullName("Standard User");
-        standardUser.setStatus(1); // Active
-        standardUser.setRoles(Set.of(userRole));
-        userRepository.save(standardUser);
+    private void seedUsers(Role adminRole, Role userRole, Role testerRole, Role guestRole) {
+        createUser("admin", "admin@example.com", "Admin User", "password", adminRole);
+        createUser("user", "user@example.com", "Standard User", "password", userRole);
+        createUser("tester", "tester@example.com", "Tester User", "password", testerRole);
+        createUser("guest", "guest@example.com", "Guest User", "password", guestRole);
     }
 
     // --- Helper methods to create and save entities, keeping the main logic clean ---
+
+    private void createUser(String username, String email, String fullName, String password, Role role) {
+        if (!userRepository.existsByUsername(username)) {
+            User user = new User();
+            user.setUsername(username);
+            user.setEmail(email);
+            user.setFullName(fullName);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setStatus(1); // Active
+            user.setRoles(Set.of(role));
+            userRepository.save(user);
+        }
+    }
 
     private PermissionGroup createPermissionGroup(String name, int displayOrder) {
         PermissionGroup group = new PermissionGroup();

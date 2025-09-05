@@ -16,6 +16,9 @@ public class Role {
     private String name;
 
     private String description;
+
+    @Column(name = "status", nullable = false, columnDefinition = "TINYINT DEFAULT 1 COMMENT '1: Active, 2: Inactive, 3: Delete'")
+    private int status;
     
     @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
@@ -35,6 +38,8 @@ public class Role {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public int getStatus() { return status; }
+    public void setStatus(int status) { this.status = status; }
     public Set<User> getUsers() { return users; }
     public void setUsers(Set<User> users) { this.users = users; }
     public Set<PermissionDetail> getPermissionDetails() { return permissionDetails; }
