@@ -2,7 +2,6 @@ package com.aditi.menu.menu_backend.controller;
 
 import com.aditi.menu.menu_backend.dto.*;
 import com.aditi.menu.menu_backend.entity.Role;
-import com.aditi.menu.menu_backend.entity.Status;
 import com.aditi.menu.menu_backend.entity.User;
 import com.aditi.menu.menu_backend.repository.UserRepository;
 import com.aditi.menu.menu_backend.util.JwtUtil;
@@ -15,11 +14,18 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.aditi.menu.menu_backend.repository.RoleRepository;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -37,17 +43,21 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(),
-                            loginRequest.getPassword()));
+                .authenticate(new UsernamePasswordAuthenticationToken(
+                loginRequest.getUsername(),
+                loginRequest.getPassword()));
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String jwt = jwtUtil.generateToken(userDetails);
 
             User user = userRepository.findByUsername(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-            return ResponseEntity.ok(new JwtResponse(jwt, user.getUsername(), user.getEmail()));
+            Set<String> roles = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+
+            return ResponseEntity.ok(new JwtResponse(jwt, user.getUsername(), user.getEmail(), roles));
         } catch (AuthenticationException e) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Invalid username or password!"));
@@ -66,31 +76,33 @@ public class AuthController {
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
-        // Create new user's account
-        User user = new User(signUpRequest.getUsername(),
-                           encoder.encode(signUpRequest.getPassword()),
-                           signUpRequest.getEmail());
+        User user = new User();
+        user.setUsername(signUpRequest.getUsername());
+        user.setPassword(encoder.encode(signUpRequest.getPassword()));
+        user.setEmail(signUpRequest.getEmail());
 
-        if (signUpRequest.getRole() != null) {
-            try {
-                user.setRole(signUpRequest.getRole());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid role!"));
-            }
+        Set<String> strRoles = signUpRequest.getRoles();
+        Set<Role> roles = new HashSet<>();
+
+        if (strRoles == null || strRoles.isEmpty()) {
+            Role userRole = roleRepository.findByName("USER")
+                    .orElseThrow(() -> new RuntimeException("Error: Default role USER is not found."));
+            roles.add(userRole);
         } else {
-            user.setRole(Role.USER); // Default role
+            strRoles.forEach(roleName -> {
+                Role role = roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Error: Role '" + roleName + "' is not found."));
+                roles.add(role);
+            });
         }
+        
+        user.setRoles(roles);
 
         if (signUpRequest.getStatus() != null) {
-            try {
-                user.setStatus(signUpRequest.getStatus());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid status!"));
-            }
+            user.setStatus(signUpRequest.getStatus());
         } else {
-            user.setStatus(Status.ACTIVE); // Default status
+            user.setStatus(1);
         }
-
 
         userRepository.save(user);
 
