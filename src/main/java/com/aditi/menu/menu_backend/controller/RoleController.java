@@ -31,7 +31,7 @@ public class RoleController {
     @Autowired private PermissionDetailRepository permissionDetailRepository;
 
     @GetMapping("/permissions")
-    @PreAuthorize("hasAuthority('role:read')")
+    @PreAuthorize("hasAuthority('permission:read')")
     public ResponseEntity<List<PermissionGroupDto>> getAllPermissions() {
         // Fetch all permission groups and convert them to DTOs
         List<PermissionGroupDto> permissionGroups = permissionGroupRepository.findAll().stream()

@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,7 @@ public class BannerController {
     private BannerService bannerService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('menu-type:read')")
     public ResponseEntity<Map<String, Object>> getAllBanners(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -45,11 +47,13 @@ public class BannerController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu-type:read')")
     public ResponseEntity<Banner> getBannerById(@PathVariable Integer id) {
         return ResponseEntity.ok(bannerService.getBannerById(id));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('menu-type:create')")
     public Banner createBanner(
         @RequestParam("title") String title,
         @RequestParam("status") Integer status,
@@ -58,6 +62,7 @@ public class BannerController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu-type:update')")
     public ResponseEntity<Banner> updateBanner(
         @PathVariable Integer id,
         @RequestParam("title") String title,
@@ -67,12 +72,14 @@ public class BannerController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu-type:delete')")
     public ResponseEntity<Void> deleteBanner(@PathVariable Integer id) {
         bannerService.deleteBanner(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu-type:delete')")
     public ResponseEntity<Map<String, Object>> softDeleteBanner(@PathVariable Integer id, @RequestBody StatusUpdateDto statusUpdateDto) {
         Map<String, Object> response = new HashMap<>();
         try {

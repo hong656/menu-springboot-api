@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -24,6 +25,7 @@ public class RestaurantTableController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('table:read')")
     public ResponseEntity<Map<String, Object>> getAllTables(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -45,6 +47,7 @@ public class RestaurantTableController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('table:read')")
     public ResponseEntity<Map<String, Object>> getTableById(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         return tableService.getTableById(id)
@@ -60,6 +63,7 @@ public class RestaurantTableController {
     }
 
     @GetMapping("/detail/{id}")
+    @PreAuthorize("hasAuthority('table:read')")
     public ResponseEntity<Map<String, Object>> getTableId(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         return tableService.getTableId(id)
@@ -75,6 +79,7 @@ public class RestaurantTableController {
     }
 
     @GetMapping("/by-qr-token/{qrToken}")
+    @PreAuthorize("hasAuthority('table:read')")
     public ResponseEntity<Map<String, Object>> getTableByQrToken(@PathVariable String qrToken) {
         Map<String, Object> response = new HashMap<>();
         return tableService.getTableByQrToken(qrToken)
@@ -90,6 +95,7 @@ public class RestaurantTableController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('table:create')")
     public ResponseEntity<Map<String, Object>> createTable(@RequestBody RestaurantTable table) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -107,6 +113,7 @@ public class RestaurantTableController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('table:update')")
     public ResponseEntity<Map<String, Object>> updateTable(@PathVariable Long id, @RequestBody RestaurantTable table) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -121,6 +128,7 @@ public class RestaurantTableController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('table:delete')")
     public ResponseEntity<Map<String, Object>> deleteTable(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -134,6 +142,7 @@ public class RestaurantTableController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('table:delete')")
     public ResponseEntity<Map<String, Object>> softDeleteTable(@PathVariable Long id, @RequestBody StatusUpdateDto statusUpdateDto) {
         Map<String, Object> response = new HashMap<>();
         try {

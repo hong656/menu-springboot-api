@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,12 +28,14 @@ public class OrderController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('order:create')")
     public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
         OrderResponseDto createdOrder = orderService.createOrder(orderRequestDto);
         return ResponseEntity.ok(createdOrder);
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('order:read')")
     public ResponseEntity<Map<String, Object>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -54,6 +57,7 @@ public class OrderController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('order:read')")
     public ResponseEntity<Map<String, Object>> getAllOrdersWithoutPagination() {
         List<OrderResponseDto> orders = orderService.getAllOrdersWithoutPagination();
         OrderStatusSummaryDto summary = orderService.getOrderStatusSummary();
@@ -66,16 +70,19 @@ public class OrderController {
     }
 
     @GetMapping("/summary")
+    @PreAuthorize("hasAuthority('order:read')")
     public ResponseEntity<OrderStatusSummaryDto> getOrderSummary() {
         return ResponseEntity.ok(orderService.getOrderStatusSummary());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('order:read')")
     public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('order:delete')")
     public ResponseEntity<OrderResponseDto> updateOrderStatus(
             @PathVariable Long id,
             @RequestBody OrderStatusUpdateRequestDto statusUpdateDto) {
