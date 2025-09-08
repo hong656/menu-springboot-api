@@ -7,6 +7,7 @@ import com.aditi.menu.menu_backend.repository.UserRepository;
 import com.aditi.menu.menu_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,6 +51,7 @@ public class ProfileController {
     }
 
     @GetMapping("/profile")
+    @PreAuthorize("hasAuthority('user:read')")
     public ResponseEntity<?> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -73,6 +75,7 @@ public class ProfileController {
     }
 
     @GetMapping("/users")
+    @PreAuthorize("hasAuthority('user:read')")
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -118,6 +121,7 @@ public class ProfileController {
     }
 
     @PutMapping("/update")
+    @PreAuthorize("hasAuthority('user:update')")
     public ResponseEntity<?> updateProfile(@RequestBody UpdateProfileRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -151,6 +155,7 @@ public class ProfileController {
     }
 
     @PutMapping("/users/{id}")
+    @PreAuthorize("hasAuthority('user:update')")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isPresent()) {
@@ -169,13 +174,13 @@ public class ProfileController {
                 user.setStatus(request.getStatus());
             }
 
-            // --- CORRECTED ROLE UPDATE LOGIC ---
-            if (request.getRoles() != null) {
-                Set<String> strRoles = request.getRoles();
+            // --- ROLE UPDATE LOGIC ---
+            if (request.getRoleIds() != null) {
+                Set<Long> roleIds = request.getRoleIds();
                 Set<Role> roles = new HashSet<>();
-                for (String roleName : strRoles) {
-                    Role role = roleRepository.findByName(roleName)
-                            .orElseThrow(() -> new RuntimeException("Error: Role '" + roleName + "' is not found."));
+                for (Long roleId : roleIds) {
+                    Role role = roleRepository.findById(roleId)
+                            .orElseThrow(() -> new RuntimeException("Error: Role with ID '" + roleId + "' is not found."));
                     roles.add(role);
                 }
                 user.setRoles(roles);
@@ -199,6 +204,7 @@ public class ProfileController {
     }
 
     @PatchMapping("/users/delete/{id}")
+    @PreAuthorize("hasAuthority('user:delete')")
     public ResponseEntity<?> softDeleteUser(@PathVariable Long id, @RequestBody DeleteUserRequest request) {
         Optional<User> userOpt = userRepository.findById(id);
 
@@ -289,7 +295,7 @@ class UpdateUserRequest {
     private String username;
     private String password;
     private String email;
-    private Set<String> roles;
+    private Set<Long> roleIds;
     private Integer status;
 
     // Getters and Setters
@@ -299,10 +305,10 @@ class UpdateUserRequest {
     public void setPassword(String password) { this.password = password; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public void setRoles(Set<String> roles) { this.roles = roles; }
+    public Set<Long> getRoleIds() { return roleIds; }
+    public void setRoleIds(Set<Long> roleIds) { this.roleIds = roleIds; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
-    public Set<String> getRoles() { return roles; }
 }
 
 class DeleteUserRequest {

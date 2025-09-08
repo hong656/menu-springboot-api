@@ -7,15 +7,15 @@ public class RegisterRequest {
     private String password;
     private String email;
     private Integer status;
-    private Set<String> roles;
+    private Set<Long> roleIds;
 
     public RegisterRequest() {}
 
-    public RegisterRequest(String username, String password, String email, Set<String> roles, Integer status) {
+    public RegisterRequest(String username, String password, String email, Set<Long> roleIds, Integer status) {
         this.username = username;
         this.password = password;
         this.email = email;
-        this.roles = roles;
+        this.roleIds = roleIds;
         this.status = status;
     }
 
@@ -25,8 +25,11 @@ public class RegisterRequest {
     public void setPassword(String password) { this.password = password; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-        public Set<String> getRoles() {
-        return this.roles;
+    public Set<Long> getRoleIds() {
+        return this.roleIds;
+    }
+    public void setRoleIds(Set<Long> roleIds) {
+        this.roleIds = roleIds;
     }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }

@@ -6,6 +6,9 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.security.core.GrantedAuthority;
+import java.util.stream.Collectors;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -39,7 +42,7 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -52,7 +55,18 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails) {
+        // 1. Create a map for your custom claims.
         Map<String, Object> claims = new HashMap<>();
+
+        // 2. Extract the permissions (authorities) from UserDetails.
+        List<String> permissions = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        // 3. Add the permissions list to the claims map with the key "permissions".
+        claims.put("permissions", permissions);
+
+        // 4. Pass the claims and the username (subject) to the createToken method.
         return createToken(claims, userDetails.getUsername());
     }
 

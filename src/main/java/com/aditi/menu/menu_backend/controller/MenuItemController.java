@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,15 +26,16 @@ public class MenuItemController {
     private MenuItemService menuItemService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('menu:read')")
     public ResponseEntity<Map<String, Object>> getAllMenuItems(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(required = false) String search,
         @RequestParam(required = false) Integer status,
-        @RequestParam(required = false) Integer menuTypeId) {
+        @RequestParam(required = false) Integer menuitemsId) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<MenuItem> menuItemPage = menuItemService.getAllMenuItems(pageable, search, status, menuTypeId);
+        Page<MenuItem> menuItemPage = menuItemService.getAllMenuItems(pageable, search, status, menuitemsId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("items", menuItemPage.getContent());
@@ -48,11 +50,13 @@ public class MenuItemController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu:read')")
     public ResponseEntity<MenuItem> getMenuItemById(@PathVariable Integer id) {
         return ResponseEntity.ok(menuItemService.getMenuItemById(id));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('menu:create')")
     public MenuItem createMenuItem(
         @RequestPart("menuItem") String menuItemDtoString,
         @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
@@ -61,6 +65,7 @@ public class MenuItemController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu:update')")
     public ResponseEntity<MenuItem> updateMenuItem(
         @PathVariable Integer id,
         @RequestPart("menuItem") String menuItemDtoString,
@@ -70,12 +75,14 @@ public class MenuItemController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu:delete')")
     public ResponseEntity<Void> deleteMenuItem(@PathVariable Integer id) {
         menuItemService.deleteMenuItem(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('menu:delete')")
     public ResponseEntity<Map<String, Object>> softDeleteMenuItem(@PathVariable Integer id, @RequestBody StatusUpdateDto statusUpdateDto) {
         Map<String, Object> response = new HashMap<>();
         try {
