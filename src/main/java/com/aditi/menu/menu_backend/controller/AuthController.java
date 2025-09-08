@@ -81,17 +81,17 @@ public class AuthController {
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
         user.setEmail(signUpRequest.getEmail());
 
-        Set<String> strRoles = signUpRequest.getRoles();
+        Set<Long> roleIds = signUpRequest.getRoleIds();
         Set<Role> roles = new HashSet<>();
 
-        if (strRoles == null || strRoles.isEmpty()) {
+        if (roleIds == null || roleIds.isEmpty()) {
             Role userRole = roleRepository.findByName("USER")
                     .orElseThrow(() -> new RuntimeException("Error: Default role USER is not found."));
             roles.add(userRole);
         } else {
-            strRoles.forEach(roleName -> {
-                Role role = roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Error: Role '" + roleName + "' is not found."));
+            roleIds.forEach(roleId -> {
+                Role role = roleRepository.findById(roleId)
+                        .orElseThrow(() -> new RuntimeException("Error: Role with ID '" + roleId + "' is not found."));
                 roles.add(role);
             });
         }

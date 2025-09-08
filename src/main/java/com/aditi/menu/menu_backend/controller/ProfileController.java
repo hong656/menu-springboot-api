@@ -174,13 +174,13 @@ public class ProfileController {
                 user.setStatus(request.getStatus());
             }
 
-            // --- CORRECTED ROLE UPDATE LOGIC ---
-            if (request.getRoles() != null) {
-                Set<String> strRoles = request.getRoles();
+            // --- ROLE UPDATE LOGIC ---
+            if (request.getRoleIds() != null) {
+                Set<Long> roleIds = request.getRoleIds();
                 Set<Role> roles = new HashSet<>();
-                for (String roleName : strRoles) {
-                    Role role = roleRepository.findByName(roleName)
-                            .orElseThrow(() -> new RuntimeException("Error: Role '" + roleName + "' is not found."));
+                for (Long roleId : roleIds) {
+                    Role role = roleRepository.findById(roleId)
+                            .orElseThrow(() -> new RuntimeException("Error: Role with ID '" + roleId + "' is not found."));
                     roles.add(role);
                 }
                 user.setRoles(roles);
@@ -295,7 +295,7 @@ class UpdateUserRequest {
     private String username;
     private String password;
     private String email;
-    private Set<String> roles;
+    private Set<Long> roleIds;
     private Integer status;
 
     // Getters and Setters
@@ -305,10 +305,10 @@ class UpdateUserRequest {
     public void setPassword(String password) { this.password = password; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public void setRoles(Set<String> roles) { this.roles = roles; }
+    public Set<Long> getRoleIds() { return roleIds; }
+    public void setRoleIds(Set<Long> roleIds) { this.roleIds = roleIds; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
-    public Set<String> getRoles() { return roles; }
 }
 
 class DeleteUserRequest {

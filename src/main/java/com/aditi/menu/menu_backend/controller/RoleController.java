@@ -1,6 +1,7 @@
 package com.aditi.menu.menu_backend.controller;
 
 import com.aditi.menu.menu_backend.dto.*;
+import com.aditi.menu.menu_backend.dto.SimpleRoleDto;
 import com.aditi.menu.menu_backend.entity.PermissionDetail;
 import com.aditi.menu.menu_backend.entity.Role;
 import com.aditi.menu.menu_backend.repository.PermissionDetailRepository;
@@ -116,5 +117,13 @@ public class RoleController {
         roleRepository.save(role);
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('role:read')")
+    public ResponseEntity<List<SimpleRoleDto>> getAllRolesForSelection() {
+        List<Role> roles = roleRepository.findAll();
+        List<SimpleRoleDto> roleDtos = roles.stream().map(SimpleRoleDto::new).collect(Collectors.toList());
+        return ResponseEntity.ok(roleDtos);
     }
 }
